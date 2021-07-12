@@ -1,7 +1,7 @@
 import 'reflect-metadata';
-import { ELEMENT_META_KEY } from './constants';
+import { ELEMENT_META_KEY } from '../constants';
 
-export default function track(attribute = false) {
+export function track(attribute = false) {
   return (target, property) => {
     let metadata = Reflect.getMetadata(ELEMENT_META_KEY, target.constructor) || {};
     metadata.trackers = metadata.trackers || [];

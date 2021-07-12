@@ -3,7 +3,7 @@ import { HotModuleReplacementPlugin } from 'webpack';
 
 export default {
   mode: 'development',
-  entry: { app: './src/index.js' },
+  entry: { app: './dev.js' },
   module: {
     rules: [
       { test: /\.js$/, exclude: /node_modules/, loader: 'eslint-loader', enforce: 'pre' },
@@ -19,7 +19,7 @@ export default {
   plugins: [
     new HotModuleReplacementPlugin(),
     new HtmlWebpackPlugin({
-      template: './src/index.html',
+      template: './index.html',
       inject: true
     })
   ],

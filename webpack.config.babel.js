@@ -6,11 +6,11 @@ const version = pkg.version;
 
 export default {
   mode: 'production',
-  entry: { app: './kitty.js.js' },
+  entry: { app: './src/kitty.js' },
   output: {
     path: __dirname + '/dist',
-    filename: optimizeMinimize ? `kitty.js-${version}.min.js` : `kitty.js-${version}.js`,
-    library: 'httpSupervisor',
+    filename: optimizeMinimize ? `kitty-${version}.min.js` : `kitty-${version}.js`,
+    library: 'kitty',
     libraryExport: 'default',
     libraryTarget: 'umd'
   },

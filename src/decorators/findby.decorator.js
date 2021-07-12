@@ -1,7 +1,7 @@
 import 'reflect-metadata';
-import { ELEMENT_META_KEY } from './constants';
+import { ELEMENT_META_KEY } from '../constants';
 
-export default function findBy(selector) {
+export function findBy(selector) {
   return (target, property) => {
     let metadata = Reflect.getMetadata(ELEMENT_META_KEY, target.constructor) || {};
     metadata.accessors = metadata.accessors || {};

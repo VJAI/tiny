@@ -1,7 +1,7 @@
 import 'reflect-metadata';
-import { ELEMENT_META_KEY } from './constants';
+import { ELEMENT_META_KEY } from '../constants';
 
-export default function handle(eventName, element = 'self') {
+export function handle(eventName, element = 'self') {
   return function(target, handler) {
     let metadata = Reflect.getMetadata(ELEMENT_META_KEY, target.constructor) || {};
     metadata.handlers = metadata.handlers || {};

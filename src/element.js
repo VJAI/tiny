@@ -2,7 +2,7 @@ import 'reflect-metadata';
 import { ELEMENT_META_KEY } from './constants';
 import { buildCssString } from './util';
 
-export default class KitElement extends HTMLElement {
+export class KitElement extends HTMLElement {
 
   _initialized = false;
 
