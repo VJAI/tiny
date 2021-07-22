@@ -1,2 +1,4 @@
 # kitty.js
-A simple library simplifies building components using native browser technologies
+A tiny library simplifies building web components using decorators!
+
+

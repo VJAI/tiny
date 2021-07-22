@@ -1,5 +1,5 @@
-import { getMeta, setMeta } from './meta.service';
 import { Binding } from './binding';
+import { addBinding } from './meta.service';
 
 /**
  * Binding that affects the visibility of an element.
@@ -11,12 +11,7 @@ class VisibleBinding extends Binding {
   }
 
   apply(element, value) {
-    if (value) {
-      delete element.style;
-      return;
-    }
-
-    element.addStyle({ display: 'none '});
+    element.addStyle({ display: value ? null : 'none '});
   }
 }
 
@@ -25,15 +20,5 @@ class VisibleBinding extends Binding {
  * @param {String} selector The element selector.
  */
 export function show(selector) {
-  return (target, property) => {
-    const metadata = getMeta(target.constructor),
-      { bindings } = metadata;
-
-    if (!bindings.has(property)) {
-      bindings.set(property, new Set());
-    }
-
-    bindings.get(property).add(new VisibleBinding(property, selector));
-    setMeta(target.constructor, metadata);
-  }
+  return (target, property) => addBinding(property, new VisibleBinding(target, property, selector));
 }

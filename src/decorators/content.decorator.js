@@ -1,5 +1,5 @@
-import { getMeta, setMeta } from './meta.service';
 import { Binding } from './binding';
+import { addBinding } from './meta.service';
 
 /**
  * Binding that affects the html content of an element.
@@ -28,15 +28,5 @@ class ContentBinding extends Binding {
  * @param {String} [defaultValue] The default value.
  */
 export function content(selector, defaultValue) {
-  return (target, property) => {
-    const metadata = getMeta(target.constructor),
-      { bindings } = metadata;
-
-    if (!bindings.has(property)) {
-      bindings.set(property, new Set());
-    }
-
-    bindings.get(property).add(new ContentBinding(property, selector, defaultValue));
-    setMeta(target.constructor, metadata);
-  }
+  return (target, property) => addBinding(property, new ContentBinding(target, property, selector, defaultValue));
 }

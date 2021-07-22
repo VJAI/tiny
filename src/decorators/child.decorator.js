@@ -1,5 +1,5 @@
-import { getMeta, setMeta } from './meta.service';
 import { Binding } from './binding';
+import { addBinding } from './meta.service';
 
 /**
  * Binding that affects the children of an element.
@@ -11,13 +11,7 @@ class ChildBinding extends Binding {
   }
 
   apply(element, value) {
-    element.removeChildren(this.selector);
-
-    if (!value || typeof value !== 'object' && !Array.isArray(value)) {
-      return;
-    }
-
-    element.addChildren(Array.isArray(value) ? value : [value], this.selector);
+    element.removeChildren(this.selector).addChildren(value, this.selector);
   }
 }
 
@@ -26,15 +20,5 @@ class ChildBinding extends Binding {
  * @param {String} selector The css selector.
  */
 export function child(selector) {
-  return (target, property) => {
-    const metadata = getMeta(target.constructor),
-      { bindings } = metadata;
-
-    if (!bindings.has(property)) {
-      bindings.set(property, new Set());
-    }
-
-    bindings.get(property).add(new ChildBinding(property, selector));
-    setMeta(target.constructor, metadata);
-  }
+  return (target, property) => addBinding(property, new ChildBinding(target, property, selector));
 }

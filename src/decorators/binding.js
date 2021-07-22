@@ -32,7 +32,7 @@ class Binding {
   }
 
   /**
-   * Invoked to update the DOM by the passed value.
+   * Invoked when we need to update DOM.
    */
   apply(element, value) {
     throw new Error('Should be implemented by derived class');

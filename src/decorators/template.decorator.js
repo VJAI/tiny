@@ -1,5 +1,5 @@
 import { getMeta, setMeta } from './meta.service';
-import { TemplateBinding } from './binding';
+import { Binding } from './binding';
 
 /**
  * Binding that renders a template as child to an element.

@@ -2,6 +2,7 @@ import 'reflect-metadata';
 import { ELEMENT_META_KEY } from './constants';
 import { ElementMetadata } from './element.metadata';
 import { isVoid } from './util';
+import e from 'cors';
 
 /**
  * Represents the base class for all Kit elements.
@@ -263,65 +264,8 @@ export class KitElement extends HTMLElement {
   }
 
   /**
-   * Returns the attribute value of the element.
-   * @param {String} name The attribute name.
-   * @param {HTMLElement|String} [el=this] The element.
-   * @returns {String}
-   */
-  getAttr(name, el = this) {
-    el = this._element(el);
-
-    if (!el) {
-      return;
-    }
-
-    return el.getAttribute(name) ? el.getAttribute(name) : '';
-  }
-
-  /**
-   * Sets attribute for element.
-   * @param {Object} obj The attributes map.
-   * @param {HTMLElement|String} [el=this] The element.
-   * @returns {KitElement}
-   */
-  setAttr(obj, el = this) {
-    el = this._element(el);
-
-    if (!el) {
-      return;
-    }
-
-    Object.entries(obj).forEach(([key, value]) => el.setAttribute(key, value));
-    return this;
-  }
-
-  /**
-   * Returns the value of the data attribute.
-   * @param {string} name The data attribute name.
-   * @param {HTMLElement|String} [el=this] The element.
-   * @returns {String}
-   */
-  getData(name, el = this) {
-    return this.getAttr(`data-${name}`, el);
-  }
-
-  /**
-   * Sets object of data attributes.
-   * @param {Object} obj
-   * @param {HTMLElement|String} [el=this] The element.
-   * @returns {KitElement}
-   */
-  setData(obj, el = this) {
-    this.setAttr(Object.entries(obj).reduce((acc, [key, value]) => {
-      acc[`data-${key}`] = value;
-      return acc;
-    }, {}), el);
-    return this;
-  }
-
-  /**
-   * Sets single class or multiple classes.
-   * @param {String|Array<String>} classes
+   * Adds single or multiple classes.
+   * @param {String|Array<String>} classes The css classes.
    * @param {HTMLElement|String} [el=this] The element.
    * @returns {KitElement}
    */
@@ -349,7 +293,7 @@ export class KitElement extends HTMLElement {
       return this;
     }
 
-    el.classList.remove(...classes);
+    el.classList.remove(...(Array.isArray(classes) ? classes : [classes]));
     return this;
   }
 
@@ -382,6 +326,95 @@ export class KitElement extends HTMLElement {
   }
 
   /**
+   * Returns the attribute value of the element.
+   * @param {String} name The attribute name.
+   * @param {HTMLElement|String} [el=this] The element.
+   * @returns {String}
+   */
+  getAttr(name, el = this) {
+    el = this._element(el);
+
+    if (!el) {
+      return;
+    }
+
+    return el.getAttribute(name) ? el.getAttribute(name) : '';
+  }
+
+  /**
+   * Sets attributes for element from the passed object.
+   * @param {Object} obj The attributes map.
+   * @param {HTMLElement|String} [el=this] The element.
+   * @returns {KitElement}
+   */
+  setAttr(obj, el = this) {
+    el = this._element(el);
+
+    if (!el) {
+      return this;
+    }
+
+    Object.entries(obj).forEach(([key, value]) => value === null ? this.removeAttr(key) : el.setAttribute(key, value));
+    return this;
+  }
+
+  /**
+   * Removes the passed attributes from the element.
+   * @param {String|Array<String>} attrs The attribute(s).
+   * @param {HTMLElement|String} [el=this] The element.
+   * @returns {KitElement}
+   */
+  removeAttr(attrs, el = this) {
+    el = this._element(el);
+
+    if (!el) {
+      return this;
+    }
+
+    (Array.isArray(attrs) ? attrs : [attrs]).forEach(attr => el.removeAttribute(attr));
+  }
+
+  /**
+   * Returns the value of the data attribute.
+   * @param {string} name The data attribute name.
+   * @param {HTMLElement|String} [el=this] The element.
+   * @returns {String}
+   */
+  getData(name, el = this) {
+    return this.getAttr(`data-${name}`, el);
+  }
+
+  /**
+   * Sets object of data attributes.
+   * @param {Object} obj
+   * @param {HTMLElement|String} [el=this] The element.
+   * @returns {KitElement}
+   */
+  setData(obj, el = this) {
+    this.setAttr(Object.entries(obj).reduce((acc, [key, value]) => {
+      acc[`data-${key}`] = value;
+      return acc;
+    }, {}), el);
+    return this;
+  }
+
+  /**
+   * Returns the passed style's value.
+   * @param {String} name The style name.
+   * @param {HTMLElement|String} el The element.
+   * @returns {String}
+   */
+  getStyle(name, el = this) {
+    el = this._element(el);
+
+    if (!el) {
+      return;
+    }
+
+    return el.style[name];
+  }
+
+  /**
    * Add passed styles.
    * @param {Object} styles The styles object.
    * @param {HTMLElement|String} [el=this] The element.
@@ -397,6 +430,8 @@ export class KitElement extends HTMLElement {
     Object.entries(styles).forEach(([k, v]) => {
       if (k.startsWith('--')) {
         el.style.setProperty(k, v);
+      } else if (v === null) {
+        this.removeStyles(k, el);
       } else {
         el.style[k] = v;
       }
@@ -421,7 +456,7 @@ export class KitElement extends HTMLElement {
   }
 
   /**
-   * Removes the passes style(s).
+   * Removes the passed style(s).
    * @param {String|Array<String>} styles Style(s).
    * @param {HTMLElement|String} [el=this] The element.
    * @returns {KitElement}
@@ -438,13 +473,33 @@ export class KitElement extends HTMLElement {
   }
 
   /**
-   * Adds the passed children.
+   * Returns the child from the passed index.
+   * @param {Number} index The index.
+   * @param {HTMLElement|String} parent The parent element.
+   */
+  getChild(index, parent = this) {
+    parent = this._element(parent);
+
+    if (!parent) {
+      return this;
+    }
+
+    return parent.children[index];
+  }
+
+  /**
+   * Inserts the passed elements as children.
    * @param {HTMLElement|Array<HTMLElement>|HTMLCollection} children The elements to be added.
    * @param {HTMLElement|String} [el=this] The element.
    * @returns {KitElement}
    */
   addChildren(children, parent = this) {
     parent = this._element(parent);
+
+    if (!parent) {
+      return this;
+    }
+
     [...(children instanceof HTMLElement ? [children] : children)].forEach(child => parent.appendChild(child));
     return this;
   }
@@ -458,7 +513,7 @@ export class KitElement extends HTMLElement {
     el = this._element(el);
 
     if (!el) {
-      return;
+      return this;
     }
 
     while (el.firstChild) {

@@ -1,7 +1,7 @@
 {
   "name": "kitty.js",
   "version": "1.0.0",
-  "description": "A simple library simplifies building components using native browser technologies",
+  "description": "A tiny library simplifies building web components using decorators",
   "scripts": {
     "start": "opener http://localhost:8080/index.html && webpack-dev-server --config webpack.dev.config.babel.js",
     "build": "webpack && webpack -p"

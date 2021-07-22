@@ -1,8 +1,9 @@
-import { getMeta, setMeta } from './meta.service';
 import { Binding } from './binding';
+import { addBinding } from './meta.service';
+import { isVoid } from '../util';
 
 /**
- * Binding that affects the attributes.
+ * Binding that applies attributes to an element.
  */
 class AttrBinding extends Binding {
 
@@ -18,6 +19,10 @@ class AttrBinding extends Binding {
    */
   defaultValue = null;
 
+  get attributeName() {
+    return this.name || this.prop;
+  }
+
   constructor(prop, selector, name, defaultValue) {
     super('attr', prop, selector);
     this.name = name;
@@ -25,13 +30,8 @@ class AttrBinding extends Binding {
   }
 
   apply(element, value) {
-    const v = value || this.defaultValue;
-
-    if (!v || typeof v !== 'object' && typeof v !== 'string') {
-      return;
-    }
-
-    element.setAttr(typeof v === 'object' ? v : { [this.name || this.prop]: v }, this.selector);
+    const val = isVoid(value) ? this.defaultValue : value;
+    element.setAttr(!isVoid(val) && typeof val === 'object' ? val : { [this.name || this.prop]: val }, this.selector);
   }
 }
 
@@ -42,15 +42,5 @@ class AttrBinding extends Binding {
  * @param {*} [defaultValue] The default value of the attribute.
  */
 export function attr(selector, name, defaultValue) {
-  return (target, property) => {
-    const metadata = getMeta(target.constructor),
-      { bindings } = metadata;
-
-    if (!bindings.has(property)) {
-      bindings.set(property, new Set());
-    }
-
-    bindings.get(property).add(new AttrBinding(property, selector, name, defaultValue));
-    setMeta(target.constructor, metadata);
-  }
+  return (target, property) => addBinding(property, new AttrBinding(target, property, selector, name, defaultValue));
 }

@@ -9,3 +9,12 @@ export function getMeta(target) {
 export function setMeta(target, meta) {
   Reflect.defineMetadata(ELEMENT_META_KEY, meta, target);
 }
+
+export function addBinding(target, property, binding) {
+  const meta = getMeta(target.constructor),
+    { bindings } = metadata;
+
+  !bindings.has(property) && bindings.set(property, new Set());
+  bindings.get(property).add(binding);
+  setMeta(meta);
+}
