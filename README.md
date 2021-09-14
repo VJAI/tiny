@@ -92,30 +92,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
 Contains methods to perform DOM operations.
 
-`create(name, options)` - Create new element and returns it. <br>
-`$(selector, el = this)` - Queries and returns the element that matches the passed CSS selector. <br>
-`$$(selector, el = this)` - Queries and returns the elements that matches the passed CSS selector. <br>
-`addClass(classes, el = this)` - Adds single or multiple classes. <br>
-`removeClass(classes, el = this)` - Removes single or multiple classes. <br>
-`clearClasses(el = this)` - Clear all classes. <br>
-`toggleClass(sourceCls, targetCls, el = this)` - Toggles source css classes with the target. <br>
-`getAttr(name, el = this)` - Returns the attribute value of the element. <br>
-`setAttr(obj, el = this)` - Sets attributes for element from the passed object. <br>
-`removeAttr(attrs, el = this)` - Removes the passed attributes from the element. <br>
-`getData(name, el = this)` - Returns the value of the data attribute. <br>
-`setData(obj, el = this)` - Sets object of data attributes. <br>
-`getStyle(name, el = this)` - Returns the passed style's value. <br>
-`addStyle(styles, el = this)` - Add passed styles. <br>
-`clearStyles(el = this)` - Clears the passed styles. <br>
-`removeStyles(styles, el = this)` - Removes the passed style(s). <br>
-`getChild(index, parent = this)` - Returns the child from the passed index. <br>
-`addChildren(children, parent = this)` - Inserts the passed elements as children. <br>
-`removeChildren(el = this)` - Removes all the children. <br>
-`updateHtml(html, el = this)` - Updates html of the element. <br>
-`show(el = this)` - Shows the element. <br>
-`hide(el = this)` - Hides the element. <br>
-`on(eventName, handler, el = this)` - Subscribes to the event. <br>
-`off(eventName, handler, el = this)` - Un-subscribes from the event. <br>
+`create(name, options)` - Create new element and returns it. <br><br>
+`$(selector, el = this)` - Queries and returns the element that matches the passed CSS selector. <br><br>
+`$$(selector, el = this)` - Queries and returns the elements that matches the passed CSS selector. <br><br>
+`addClass(classes, el = this)` - Adds single or multiple classes. <br><br>
+`removeClass(classes, el = this)` - Removes single or multiple classes. <br><br>
+`clearClasses(el = this)` - Clear all classes. <br><br>
+`toggleClass(sourceCls, targetCls, el = this)` - Toggles source css classes with the target. <br><br>
+`getAttr(name, el = this)` - Returns the attribute value of the element. <br><br>
+`setAttr(obj, el = this)` - Sets attributes for element from the passed object. <br><br>
+`removeAttr(attrs, el = this)` - Removes the passed attributes from the element. <br><br>
+`getData(name, el = this)` - Returns the value of the data attribute. <br><br>
+`setData(obj, el = this)` - Sets object of data attributes. <br><br>
+`getStyle(name, el = this)` - Returns the passed style's value. <br><br>
+`addStyle(styles, el = this)` - Add passed styles. <br><br>
+`clearStyles(el = this)` - Clears the passed styles. <br><br>
+`removeStyles(styles, el = this)` - Removes the passed style(s). <br><br>
+`getChild(index, parent = this)` - Returns the child from the passed index. <br><br>
+`addChildren(children, parent = this)` - Inserts the passed elements as children. <br><br>
+`removeChildren(el = this)` - Removes all the children. <br><br>
+`updateHtml(html, el = this)` - Updates html of the element. <br><br>
+`show(el = this)` - Shows the element. <br><br>
+`hide(el = this)` - Hides the element. <br><br>
+`on(eventName, handler, el = this)` - Subscribes to the event. <br><br>
+`off(eventName, handler, el = this)` - Un-subscribes from the event. <br><br>
 
 ### `element` decorator
 
