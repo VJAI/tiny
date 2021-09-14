@@ -38,8 +38,7 @@ class TodoApp extends TinyElement {
 
     const todo = this.create('todo-item', {
       props: {
-        item: this.input.value,
-        parent: this
+        item: this.input.value
       }
     });
 
@@ -57,9 +56,6 @@ class Todo extends TinyElement {
 
   @input(true)
   item;
-
-  @input()
-  parent;
 
   @query('.text')
   spanEl;
