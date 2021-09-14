@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="https://github.com/VJAI/tiny/blob/main/assets/tiny.png" width="200" />
+</p>
+
 # tiny
 A tiny library simplifies building web components using a base class and small set of decorators.
 
