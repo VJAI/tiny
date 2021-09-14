@@ -117,16 +117,37 @@ Contains methods to perform DOM operations.
 `on(eventName, handler, el = this)` - Subscribes to the event. <br><br>
 `off(eventName, handler, el = this)` - Un-subscribes from the event. <br><br>
 
-### `element` decorator
+
+### `element(name, tpl, shadow = false)` decorator
+
+Decorator that helps to register a class as custom web element.
 
 
+### `input(attribute = false, dataType = 'string')` decorator
 
-### `input` decorator
-
-### `query` decorator
-
-### `handle` decorator
+Decorator that marks the applied property as an input.
 
 
+### `query(selector)` decorator
+
+Decorator that helps to query and return DOM element(s) on accessing the applied property.
 
 
+### `queryAll(selector)` decorator
+
+Decorator that helps to query and return DOM element(s) on accessing the applied property.
+
+
+### `handle(eventName, element = 'self', all = false)` decorator
+
+Decorator that helps to bind a DOM event with a function.
+
+
+## LICENSE
+
+MIT
+
+
+## Contact
+
+vijay#dot#prideparrot#at#gmail.com
