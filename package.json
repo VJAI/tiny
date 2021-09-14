@@ -2,6 +2,15 @@
   "name": "tiny-lib",
   "version": "1.0.0",
   "description": "A tiny library simplifies building web components using decorators",
+  "main": "dist/tiny.js",
+  "repository": "VJAI/tiny",
+  "keywords": [
+    "ui",
+    "web components",
+    "custom element"
+  ],
+  "author": "Vijaya Anand <vijay.prideparrot@gmail.com>",
+  "license": "MIT",
   "scripts": {
     "start": "opener http://localhost:8080/index.html && webpack-dev-server --config webpack.dev.config.babel.js",
     "build": "webpack && webpack -p"

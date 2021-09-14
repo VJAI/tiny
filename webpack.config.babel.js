@@ -9,9 +9,8 @@ export default {
   entry: { app: './src/index.js' },
   output: {
     path: __dirname + '/dist',
-    filename: optimizeMinimize ? `tiny-${version}.min.js` : `tiny-${version}.js`,
+    filename: optimizeMinimize ? `tiny.min.js` : `tiny.js`,
     library: 'tiny',
-    libraryExport: 'default',
     libraryTarget: 'umd'
   },
   module: {
