@@ -119,9 +119,9 @@ Contains methods to perform DOM operations.
 
 #### Life-cycle hooks
 
-`onConnected()` - Native hook.<br>
-`onDisconnected()` - Native hook.<br>
-`onChanges(changes)` - Called initially and whenever there is a change in inputs.<br>
+`onConnected()` - Native hook.<br><br>
+`onDisconnected()` - Native hook.<br><br>
+`onChanges(changes)` - Called initially and whenever there is a change in inputs.<br><br>
 
 
 ### `element(name, tpl, shadow = false)` decorator
