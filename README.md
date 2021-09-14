@@ -1,5 +1,5 @@
 # tiny
-A tiny library simplifies building web components using a base class and small set of decorators!
+A tiny library simplifies building web components using a base class and small set of decorators.
 
 ## Installation
 
@@ -116,6 +116,12 @@ Contains methods to perform DOM operations.
 `hide(el = this)` - Hides the element. <br><br>
 `on(eventName, handler, el = this)` - Subscribes to the event. <br><br>
 `off(eventName, handler, el = this)` - Un-subscribes from the event. <br><br>
+
+#### Life-cycle hooks
+
+`onConnected()` - Native hook.
+`onDisconnected()` - Native hook.
+`onChanges(changes)` - Called initially and whenever there is a change in inputs.
 
 
 ### `element(name, tpl, shadow = false)` decorator
