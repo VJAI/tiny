@@ -1,8 +1,6 @@
-import pkg from './package.json';
 import yargs from 'yargs';
 
 const { optimizeMinimize } = yargs.alias('p', 'optimize-minimize').argv;
-const version = pkg.version;
 
 export default {
   mode: 'production',
@@ -10,8 +8,10 @@ export default {
   output: {
     path: __dirname + '/dist',
     filename: optimizeMinimize ? `tiny.min.js` : `tiny.js`,
-    library: 'tiny',
     libraryTarget: 'umd'
+  },
+  optimization: {
+    minimize: !!optimizeMinimize,
   },
   module: {
     rules: [

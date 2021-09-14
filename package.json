@@ -1,5 +1,5 @@
 {
-  "name": "tiny-lib",
+  "name": "tiny.element.js",
   "version": "1.0.0",
   "description": "A tiny library simplifies building web components using decorators",
   "main": "dist/tiny.js",
