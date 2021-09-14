@@ -6,11 +6,11 @@ const version = pkg.version;
 
 export default {
   mode: 'production',
-  entry: { app: './src/kitty.js' },
+  entry: { app: './src/index.js' },
   output: {
     path: __dirname + '/dist',
-    filename: optimizeMinimize ? `kitty-${version}.min.js` : `kitty-${version}.js`,
-    library: 'kitty',
+    filename: optimizeMinimize ? `tiny-${version}.min.js` : `tiny-${version}.js`,
+    library: 'tiny',
     libraryExport: 'default',
     libraryTarget: 'umd'
   },

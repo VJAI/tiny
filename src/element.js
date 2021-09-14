@@ -1,14 +1,13 @@
 import 'reflect-metadata';
-import { ELEMENT_META_KEY } from './constants';
+import { ELEMENT_META_KEY, AttributeValueDataType } from './constants';
 import { ElementMetadata } from './element.metadata';
 import { isVoid } from './util';
-import e from 'cors';
 
 /**
- * Represents the base class for all Kit elements.
+ * Represents the base class for all Tiny elements.
  * Simplifies developing components using native browser technologies.
  */
-export class KitElement extends HTMLElement {
+export class TinyElement extends HTMLElement {
 
   /**
    * True if the component is initialized.
@@ -88,6 +87,112 @@ export class KitElement extends HTMLElement {
   }
 
   /**
+   * Read accessors from metadata and re-define `getters` for applied props.
+   */
+  _applyAccessors() {
+    [...this.metadata.accessors].forEach(([prop, { selector, all }]) => {
+      Object.defineProperty(this, prop, {
+        get() {
+          return all ? this.$$(selector) : this.$(selector);
+        }
+      });
+    });
+  }
+
+  /**
+   * Read inputs from metadata and re-define `getters` and `setters` for applied props.
+   */
+  _applyInputs() {
+    [...this.metadata.inputs].forEach(({property, attribute, datatype}) => {
+      let attrValue = this.getAttr(property);
+
+      if (datatype === AttributeValueDataType.NUMBER && attrValue) {
+        attrValue = parseFloat(attrValue);
+      } else {
+        if (attrValue === 'true' || attrValue === '') {
+          attrValue = true;
+        } else if (attrValue === 'false') {
+          attrValue = false;
+        }
+      }
+
+      let value;
+
+      if (attribute) {
+        value = this[property] !== undefined ? this[property] : attrValue;
+
+        if (!isVoid(value) && value !== attrValue) {
+          this.setAttr({ [property]: value });
+        }
+      } else {
+        value = this[property];
+      }
+
+      this._pushChange(property, value);
+      this._props.set(property, value);
+      Object.defineProperty(this, property, {
+        get() {
+          return this._props.get(property);
+        },
+        set(value) {
+          if (attribute) {
+            if (value) {
+              this.setAttr({ [property]: !isVoid(value) ? value.toString() : value });
+            } else {
+              this.removeAttr(property);
+            }
+          }
+
+          this._pushChange(property, value);
+          this._props.set(property, value);
+          this._initialized && this._triggerUpdate();
+        }
+      });
+    });
+  }
+
+  /**
+   * Set event handlers scope to `this`.
+   */
+  _setHandlersScope() {
+    [...this.metadata.handlers].forEach(([, handlers]) => { [...handlers].forEach(handler => {
+      this[handler.handler] = this[handler.handler].bind(this);
+    })});
+  }
+
+  /**
+   * Read non-window event handlers from metadata and subscribe events.
+   */
+  _applyNonWindowHandlers() {
+    [...this.metadata.handlers].filter(([element]) => element !== 'window').forEach(([element, handlers]) => {
+      [...handlers].forEach(({ eventName, all, handler }) => {
+        let els;
+
+        if (element === 'self') {
+          els = [this];
+        } else if (all) {
+          els = this.$$(element);
+        } else {
+          els = [this.$(element)];
+        }
+
+        els.forEach(el => {
+          this.on(eventName, this[handler], el);
+        });
+      });
+    });
+  }
+
+  /**
+   * Read window event handlers from metadata and subscribe events.
+   */
+  _applyWindowHandlers() {
+    [...this.metadata.handlers].filter(([element]) => element === 'window').forEach(([, handlers]) => {
+      handlers.forEach(({ eventName, handler }) => this.on(eventName, this[handler], window));
+    });
+  }
+
+  /**
    * Push the changed property and it's value.
    * @param {string} prop The property name.
    * @param {*} value The property value.
@@ -123,11 +228,19 @@ export class KitElement extends HTMLElement {
    * @param {*} el
    */
   _element(el) {
-    if (isVoid(el) || el === 'self') {
+    if (el === 'window' || el === window) {
+      return el;
+    }
+
+    if (arguments.length === 0 || el === 'self') {
       return this;
     }
 
-    return el instanceof HTMLElement ? el : this.$(el);
+    if (el instanceof HTMLElement) {
+      return el;
+    }
+
+    return this.$(el);
   }
 
   /**
@@ -139,72 +252,17 @@ export class KitElement extends HTMLElement {
       this._rendered = true;
     }
 
-    const {
-      accessors,
-      inputs,
-      handlers,
-      bindings
-    } = this._metadata;
-
     if (!this._initialized) {
-      [...accessors].forEach(([prop, { selector }]) => {
-        Object.defineProperty(this, prop, {
-          get() {
-            return this.$(selector);
-          }
-        });
-      });
-
-      [...inputs].forEach(({property, attribute}) => {
-        const value = this[property] || this.getAttr(property);
-        this._pushChange(property, value);
-        this._props.set(property, value);
-        Object.defineProperty(this, property, {
-          get() {
-            return this._props.get(property);
-          },
-          set(value) {
-            attribute && this.setAttr({ property: value });
-            this._pushChange(property, value);
-            this._props.set(property, value);
-            this._triggerUpdate();
-          }
-        });
-      });
-
-      [...handlers].filter(([element]) => element !== 'window').forEach(([element, handlers]) => {
-        [...handlers].forEach(({ eventName, handler }) => {
-          const el = element === 'self' ? this : this.$(element);
-          this.on(eventName, this[handler].bind(this), el);
-        });
-      });
-
-      [...bindings].forEach(([property, propertyBindings]) => {
-        [...propertyBindings].forEach(propertyBinding => propertyBinding.apply(this, this[property]));
-        this._bindings.set(property, this[property]);
-      });
-
-      [...bindings].filter(([, propertyBindings]) => [...propertyBindings].filter(b => b.type === 'input').length === 0).forEach(([property, propertyBindings]) => {
-        Object.defineProperty(this, property, {
-          get() {
-            return this._bindings.get(property);
-          },
-          set(value) {
-            [...propertyBindings].forEach(propertyBinding => propertyBinding.apply(this, value));
-            this._bindings.set(property, value);
-          }
-        });
-      });
-
+      this._applyAccessors();
+      this._applyInputs();
+      this._setHandlersScope();
+      this._applyNonWindowHandlers();
       this._initialized = true;
     }
 
-    Object.entries(handlers).filter(([element]) => element === 'window').forEach(([, handlers]) => {
-      handlers.forEach(({ eventName, handler }) => this.on(eventName, this[handler].bind(this), window));
-    });
-
-    this.refresh();
+    this._applyWindowHandlers();
     this.onConnected();
+    this.refresh();
   }
 
   /**
@@ -231,16 +289,26 @@ export class KitElement extends HTMLElement {
   create(name, options) {
     const el = document.createElement(name),
       {
+        id,
         cls,
         props,
+        attrs,
+        styles,
         events,
-        parent
+        parent,
+        html,
+        children
       } = options || {};
 
+    id && (el.id = id);
     Array.isArray(cls) && this.addClass(cls, el);
     typeof props === 'object' && Object.entries(props).forEach(([key, value]) => el[key] = value);
+    typeof attrs === 'object' && Object.entries(attrs).forEach(([key, value]) => el.setAttribute(key, value));
+    typeof styles === 'object' && this.addStyle(styles, el);
     typeof events === 'object' && Object.entries(events).forEach(([key, value]) => this.on(key, value, el));
+    typeof html === 'string' && this.updateHtml(html, el);
     parent && this.addChildren([el], parent);
+    Array.isArray(children) && children.forEach(({ name, options }) => this.create(name, {...options, parent: el }));
 
     return el;
   }
@@ -248,26 +316,56 @@ export class KitElement extends HTMLElement {
   /**
    * Queries and returns the element that matches the passed CSS selector.
    * @param {String} selector The CSS selector.
+   * @param {HTMLElement|String} [el=this] The element.
    * @returns {HTMLElement}
    */
-  $(selector) {
-    return this._metadata.shadow ? this._shadowRoot.querySelector(selector) : this.querySelector(selector);
+  $(selector, el = this) {
+    el = this._element(el);
+
+    if (!el) {
+      return this;
+    }
+
+    if (el === this) {
+      return this._metadata.shadow ? this._shadowRoot.querySelector(selector) : this.querySelector(selector);
+    }
+
+    if (el instanceof TinyElement) {
+      return el.$(selector);
+    }
+
+    return el.querySelector(selector);
   }
 
   /**
    * Queries and returns the elements that matches the passed CSS selector.
    * @param {String} selector The CSS selector.
+   * @param {HTMLElement|String} [el=this] The element.
    * @returns {HTMLCollection}
    */
-  $$(selector) {
-    return this._metadata.shadow ? this._shadowRoot.querySelectorAll(selector) : this.querySelectorAll(selector);
+  $$(selector, el = this) {
+    el = this._element(el);
+
+    if (!el) {
+      return this;
+    }
+
+    if (el === this) {
+      return this._metadata.shadow ? this._shadowRoot.querySelectorAll(selector) : this.querySelectorAll(selector);
+    }
+
+    if (el instanceof TinyElement) {
+      return el.$$(selector);
+    }
+
+    return el.querySelectorAll(selector);
   }
 
   /**
    * Adds single or multiple classes.
    * @param {String|Array<String>} classes The css classes.
    * @param {HTMLElement|String} [el=this] The element.
-   * @returns {KitElement}
+   * @returns {TinyElement}
    */
   addClass(classes, el = this) {
     el = this._element(el);
@@ -284,7 +382,7 @@ export class KitElement extends HTMLElement {
    * Removes single or multiple classes.
    * @param {String|Array<String>} classes
    * @param {HTMLElement|String} [el=this] The element.
-   * @returns {KitElement}
+   * @returns {TinyElement}
    */
   removeClass(classes, el = this) {
     el = this._element(el);
@@ -300,7 +398,7 @@ export class KitElement extends HTMLElement {
   /**
    * Clear all classes.
    * @param {HTMLElement|String} [el=this] The element.
-   * @returns {KitElement}
+   * @returns {TinyElement}
    */
   clearClasses(el = this) {
     el = this._element(el);
@@ -318,7 +416,7 @@ export class KitElement extends HTMLElement {
    * @param {String|Array<String>} sourceCls Source css class(es).
    * @param {String|Array<String>} targetCls Target css class(es).
    * @param {HTMLElement|String} [el=this] The element.
-   * @returns {KitElement}
+   * @returns {TinyElement}
    */
   toggleClass(sourceCls, targetCls, el = this) {
     this.removeClass(sourceCls, el).addClass(targetCls, el);
@@ -338,14 +436,14 @@ export class KitElement extends HTMLElement {
       return;
     }
 
-    return el.getAttribute(name) ? el.getAttribute(name) : '';
+    return el.getAttribute(name);
   }
 
   /**
    * Sets attributes for element from the passed object.
    * @param {Object} obj The attributes map.
    * @param {HTMLElement|String} [el=this] The element.
-   * @returns {KitElement}
+   * @returns {TinyElement}
    */
   setAttr(obj, el = this) {
     el = this._element(el);
@@ -362,7 +460,7 @@ export class KitElement extends HTMLElement {
    * Removes the passed attributes from the element.
    * @param {String|Array<String>} attrs The attribute(s).
    * @param {HTMLElement|String} [el=this] The element.
-   * @returns {KitElement}
+   * @returns {TinyElement}
    */
   removeAttr(attrs, el = this) {
     el = this._element(el);
@@ -388,7 +486,7 @@ export class KitElement extends HTMLElement {
    * Sets object of data attributes.
    * @param {Object} obj
    * @param {HTMLElement|String} [el=this] The element.
-   * @returns {KitElement}
+   * @returns {TinyElement}
    */
   setData(obj, el = this) {
     this.setAttr(Object.entries(obj).reduce((acc, [key, value]) => {
@@ -418,7 +516,7 @@ export class KitElement extends HTMLElement {
    * Add passed styles.
    * @param {Object} styles The styles object.
    * @param {HTMLElement|String} [el=this] The element.
-   * @returns {KitElement}
+   * @returns {TinyElement}
    */
   addStyle(styles, el = this) {
     el = this._element(el);
@@ -442,7 +540,7 @@ export class KitElement extends HTMLElement {
   /**
    * Clears the passed styles.
    * @param {HTMLElement|String} [el=this] The element.
-   * @returns {KitElement}
+   * @returns {TinyElement}
    */
   clearStyles(el = this) {
     el = this._element(el);
@@ -459,7 +557,7 @@ export class KitElement extends HTMLElement {
    * Removes the passed style(s).
    * @param {String|Array<String>} styles Style(s).
    * @param {HTMLElement|String} [el=this] The element.
-   * @returns {KitElement}
+   * @returns {TinyElement}
    */
   removeStyles(styles, el = this) {
     el = this._element(el);
@@ -468,7 +566,7 @@ export class KitElement extends HTMLElement {
       return this;
     }
 
-    styles.forEach(style => delete el.style[style]);
+    (Array.isArray(styles) ? styles : [styles]).forEach(style => el.style[style] = null);
     return this;
   }
 
@@ -491,23 +589,24 @@ export class KitElement extends HTMLElement {
    * Inserts the passed elements as children.
    * @param {HTMLElement|Array<HTMLElement>|HTMLCollection} children The elements to be added.
    * @param {HTMLElement|String} [el=this] The element.
-   * @returns {KitElement}
+   * @returns {TinyElement}
    */
   addChildren(children, parent = this) {
     parent = this._element(parent);
 
-    if (!parent) {
+    if (!parent || !children) {
       return this;
     }
 
     [...(children instanceof HTMLElement ? [children] : children)].forEach(child => parent.appendChild(child));
+    this._applyNonWindowHandlers();
     return this;
   }
 
   /**
    * Removes all the children.
    * @param {HTMLElement|String} [el=this] The element.
-   * @returns {KitElement}
+   * @returns {TinyElement}
    */
   removeChildren(el = this) {
     el = this._element(el);
@@ -527,7 +626,7 @@ export class KitElement extends HTMLElement {
    * Updates html of the element.
    * @param {String} html The html.
    * @param {HTMLElement|String} [el=this] The element.
-   * @returns {KitElement}
+   * @returns {TinyElement}
    */
   updateHtml(html, el = this) {
     el = this._element(el);
@@ -543,7 +642,7 @@ export class KitElement extends HTMLElement {
   /**
    * Shows the element.
    * @param {HTMLElement|String} [el=this] The element.
-   * @returns {KitElement}
+   * @returns {TinyElement}
    */
   show(el = this) {
     el = this._element(el);
@@ -552,14 +651,14 @@ export class KitElement extends HTMLElement {
       return this;
     }
 
-    el.removeStyles(['display']);
+    this.removeStyles('display', el);
     return this;
   }
 
   /**
    * Hides the element.
    * @param {HTMLElement|String} [el=this] The element.
-   * @returns {KitElement}
+   * @returns {TinyElement}
    */
   hide(el = this) {
     el = this._element(el);
@@ -568,7 +667,7 @@ export class KitElement extends HTMLElement {
       return this;
     }
 
-    el.addStyle({ display: 'none' });
+    this.addStyle({ display: 'none' }, el);
     return this;
   }
 
@@ -577,7 +676,7 @@ export class KitElement extends HTMLElement {
    * @param {String} eventName Event name.
    * @param {Function} handler Event handler.
    * @param {HTMLElement|String} [el=this] The element.
-   * @returns {KitElement}
+   * @returns {TinyElement}
    */
   on(eventName, handler, el = this) {
     el = this._element(el);
@@ -586,7 +685,18 @@ export class KitElement extends HTMLElement {
       return this;
     }
 
+    const elEventHandlers = el['__event_handlers__'] = el['__event_handlers__'] || new Map();
+    if (!elEventHandlers.has(eventName)) {
+      elEventHandlers.set(eventName, new Set());
+    }
+
+    if (elEventHandlers.get(eventName).has(handler)) {
+      return this;
+    }
+
     el.addEventListener(eventName, handler);
+    elEventHandlers.get(eventName).add(handler);
+
     return this;
   }
 
@@ -595,7 +705,7 @@ export class KitElement extends HTMLElement {
    * @param {String} eventName Event name.
    * @param {Function} handler Event handler.
    * @param {HTMLElement|String} [el=this] The element.
-   * @returns {KitElement}
+   * @returns {TinyElement}
    */
   off(eventName, handler, el = this) {
     el = this._element(el);
@@ -605,12 +715,20 @@ export class KitElement extends HTMLElement {
     }
 
     el.removeEventListener(eventName, handler);
+
+    const elEventHandlers = el['__event_handlers__'] = el['__event_handlers__'] || new Map();
+    if (!elEventHandlers.has(eventName)) {
+      return this;
+    }
+
+    elEventHandlers.get(eventName).delete(handler);
+
     return this;
   }
 
   /**
    * Renders the element.
-   * @returns {KitElement}
+   * @returns {TinyElement}
    */
   render() {
     if (!this._metadata.tpl) {
@@ -634,7 +752,7 @@ export class KitElement extends HTMLElement {
    * Refresh the UI.
    */
   refresh() {
-    this.applyChanges();
+    this.onChanges(this.changes);
     this.runDecorators();
     this.changes.clear();
     this._updateTimer && window.clearTimeout(this._updateTimer);
@@ -666,5 +784,5 @@ export class KitElement extends HTMLElement {
   /**
    * Should be overwritten by sub-components to update the decorators/DOM.
    */
-  applyChanges() { }
+  onChanges(changes) { }
 }

@@ -5,7 +5,7 @@ import { getMeta, setMeta } from './meta.service';
  * @param {String} eventName The event name.
  * @param {String} element The css selector. If the value is "self" then it represents the same element.
  */
-export function handle(eventName, element = 'self') {
+export function handle(eventName, element = 'self', all = false) {
   return function(target, handler) {
     const metadata = getMeta(target.constructor),
       { handlers } = metadata;
@@ -14,7 +14,7 @@ export function handle(eventName, element = 'self') {
       handlers.set(element, new Set());
     }
 
-    handlers.get(element).add({ eventName, handler });
+    handlers.get(element).add({ eventName, handler, all });
     setMeta(target.constructor, metadata);
   }
 }

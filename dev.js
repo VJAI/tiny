@@ -1,5 +1,5 @@
 import '@webcomponents/webcomponentsjs/custom-elements-es5-adapter.js';
-import { KitElement, element } from './src/kitty';
+import { TinyElement, element } from './src';
 
 @element('todo-app')
 class TodoApp extends KitElement {
