@@ -1917,6 +1917,8 @@ __webpack_require__.d(__webpack_exports__, "query", function() { return /* reexp
 __webpack_require__.d(__webpack_exports__, "queryAll", function() { return /* reexport */ queryAll; });
 __webpack_require__.d(__webpack_exports__, "input", function() { return /* reexport */ input; });
 __webpack_require__.d(__webpack_exports__, "handle", function() { return /* reexport */ handle; });
+__webpack_require__.d(__webpack_exports__, "ELEMENT_META_KEY", function() { return /* reexport */ ELEMENT_META_KEY; });
+__webpack_require__.d(__webpack_exports__, "AttributeValueDataType", function() { return /* reexport */ AttributeValueDataType; });
 
 // EXTERNAL MODULE: ./node_modules/@babel/runtime/helpers/typeof.js
 var helpers_typeof = __webpack_require__(4);
@@ -3262,6 +3264,7 @@ function handle(eventName) {
 
 
 // CONCATENATED MODULE: ./src/index.js
+
 
 
 
