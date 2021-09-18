@@ -1,5 +1,5 @@
 # ƚιɳყ
-A tiny library simplifies building web components using a base class and small set of decorators.
+A tiny library (~30kb minified) simplifies building web components using a base class and small set of decorators.
 
 ## Installation
 
@@ -8,6 +8,8 @@ npm i tiny.element.js --save
 ```
 
 ## Example
+
+A simple todo app.
 
 ```js
 import { TinyElement, element, query, handle, input } from 'tiny.element.js';
@@ -112,12 +114,9 @@ Contains methods to perform DOM operations.
 `hide(el = this)` - Hides the element. <br><br>
 `on(eventName, handler, el = this)` - Subscribes to the event. <br><br>
 `off(eventName, handler, el = this)` - Un-subscribes from the event. <br><br>
-
-#### Life-cycle hooks
-
-`onConnected()` - Native hook.<br><br>
-`onDisconnected()` - Native hook.<br><br>
-`onChanges(changes)` - Called initially and whenever there is a change in inputs.<br><br>
+`onConnected()` - Invoked after the element is connected to DOM (life-cycle hook).<br><br>
+`onDisconnected()` - Invoked after the element is dis-connected to DOM (life-cycle hook).<br><br>
+`onChanges(changes)` - Called initially and whenever there is a change in inputs (life-cycle hook).<br><br>
 
 
 ### `element(name, tpl, shadow = false)` decorator
@@ -145,7 +144,7 @@ Decorator that helps to query and return DOM element(s) on accessing the applied
 Decorator that helps to bind a DOM event with a function.
 
 
-## LICENSE
+## License
 
 MIT
 

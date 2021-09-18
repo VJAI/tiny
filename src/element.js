@@ -362,8 +362,8 @@ export class TinyElement extends HTMLElement {
   }
 
   /**
-   * Adds single or multiple classes.
-   * @param {String|Array<String>} classes The css classes.
+   * Adds single or multiple CSS classes.
+   * @param {String|Array<String>} classes The CSS classes.
    * @param {HTMLElement|String} [el=this] The element.
    * @returns {TinyElement}
    */
