@@ -1,6 +1,6 @@
 {
   "name": "tiny.element.js",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A tiny library simplifies building web components using decorators",
   "main": "dist/tiny.js",
   "repository": "VJAI/tiny",
