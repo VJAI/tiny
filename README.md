@@ -5,7 +5,7 @@ A tiny library (~30kb minified) simplifies building web components using a base 
 ## Installation
 
 ```shell
-npm i tiny.element.js --save
+npm i @tiny/core --save
 ```
 
 ## Example
@@ -13,7 +13,7 @@ npm i tiny.element.js --save
 A simple todo app.
 
 ```js
-import { TinyElement, element, query, handle, input } from 'tiny.element.js';
+import { TinyElement, element, query, handle, input } from '@tiny/core';
 
 @element('todo-app',
 `<div class="container">
