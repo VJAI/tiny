@@ -13,7 +13,7 @@ npm i @tiny/core --save
 A simple todo app.
 
 ```js
-import { TinyElement, element, query, handle, input } from '@tiny/core';
+import { TinyElement, element, query, handle, input } from '@tiny/root';
 
 @element('todo-app',
 `<div class="container">

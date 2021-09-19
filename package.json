@@ -1,5 +1,5 @@
 {
-  "name": "@tiny/core",
+  "name": "@tiny/root",
   "version": "1.0.3",
   "description": "A tiny library simplifies building web components using decorators",
   "main": "dist/tiny.js",
