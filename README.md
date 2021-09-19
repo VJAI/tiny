@@ -1,6 +1,6 @@
 # ƚιɳყ
 
-A tiny library (~30kb minified) simplifies building web components using a base class and small set of decorators.
+A tiny library (~20kb minified) simplifies building web components using a base class and small set of decorators.
 
 ## Installation
 

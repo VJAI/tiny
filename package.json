@@ -1,6 +1,6 @@
 {
   "name": "tiny.element.js",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "A tiny library simplifies building web components using decorators",
   "main": "dist/tiny.js",
   "repository": "VJAI/tiny",
@@ -61,7 +61,6 @@
     "yargs": "^15.1.0"
   },
   "dependencies": {
-    "@babel/runtime": "^7.11.2",
     "reflect-metadata": "^0.1.13"
   }
 }

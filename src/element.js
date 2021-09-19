@@ -1,4 +1,3 @@
-import 'reflect-metadata';
 import { ELEMENT_META_KEY, AttributeValueDataType } from './constants';
 import { ElementMetadata } from './element.metadata';
 import { isVoid } from './util';
@@ -83,7 +82,7 @@ export class TinyElement extends HTMLElement {
    */
   constructor() {
     super();
-    this._metadata = Reflect.getMetadata(ELEMENT_META_KEY, this.constructor);
+    this._metadata = this.constructor[ELEMENT_META_KEY];
   }
 
   /**
