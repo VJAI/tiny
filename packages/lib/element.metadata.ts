@@ -2,7 +2,6 @@
  * Encapsulates all the metadata information of an element.
  */
 export class ElementMetadata {
-
   /**
    * The name of the registered element.
    * @type {String}

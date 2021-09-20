@@ -1,16 +1,17 @@
-import { TinyElement, element, query, handle, input } from './src';
+import { TinyElement, element, query, handle, input } from '../lib';
 
-@element('todo-app',
-`<div class="container">
+@element(
+  'todo-app',
+  `<div class="container">
   <form>
     <input name="todo" placeholder="New Todo" />
     <button type="submit">Add</button>
   </form>
   <div class="list">
   </div>
-</div>`)
+</div>`,
+)
 class TodoApp extends TinyElement {
-
   @query('.list')
   todosContainer;
 
@@ -26,8 +27,8 @@ class TodoApp extends TinyElement {
 
     const todo = this.create('todo-item', {
       props: {
-        item: this.input.value
-      }
+        item: this.input.value,
+      },
     });
 
     this.addChildren([todo], this.todosContainer);
@@ -35,13 +36,14 @@ class TodoApp extends TinyElement {
   }
 }
 
-@element('todo-item',
-`<div>
+@element(
+  'todo-item',
+  `<div>
   <span class="text"></span>
   <button type="button" style="font-size:10px" class="delete">❌</button>
-</div>`)
+</div>`,
+)
 class Todo extends TinyElement {
-
   @input(true)
   item;
 
@@ -64,7 +66,14 @@ class Todo extends TinyElement {
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  const board = document.createElement('todo-app');
-  document.body.appendChild(board);
-});
+// document.addEventListener('DOMContentLoaded', () => {
+//   const board = document.createElement('todo-app');
+//   document.body.appendChild(board);
+// });
+
+export default {
+  component: TodoApp,
+  title: 'Examples/ToDo',
+};
+
+export const List = () => `<todo-app/>`;

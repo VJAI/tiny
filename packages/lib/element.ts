@@ -7,7 +7,6 @@ import { isVoid } from './util';
  * Simplifies developing components using native browser technologies.
  */
 export class TinyElement extends HTMLElement {
-
   /**
    * True if the component is initialized.
    * @type {Boolean}
@@ -93,7 +92,7 @@ export class TinyElement extends HTMLElement {
       Object.defineProperty(this, prop, {
         get() {
           return all ? this.$$(selector) : this.$(selector);
-        }
+        },
       });
     });
   }
@@ -102,7 +101,7 @@ export class TinyElement extends HTMLElement {
    * Read inputs from metadata and re-define `getters` and `setters` for applied props.
    */
   _applyInputs() {
-    [...this.metadata.inputs].forEach(({property, attribute, datatype}) => {
+    [...this.metadata.inputs].forEach(({ property, attribute, datatype }) => {
       let attrValue = this.getAttr(property);
 
       if (datatype === AttributeValueDataType.NUMBER && attrValue) {
@@ -136,7 +135,9 @@ export class TinyElement extends HTMLElement {
         set(value) {
           if (attribute) {
             if (value) {
-              this.setAttr({ [property]: !isVoid(value) ? value.toString() : value });
+              this.setAttr({
+                [property]: !isVoid(value) ? value.toString() : value,
+              });
             } else {
               this.removeAttr(property);
             }
@@ -145,7 +146,7 @@ export class TinyElement extends HTMLElement {
           this._pushChange(property, value);
           this._props.set(property, value);
           this._initialized && this._triggerUpdate();
-        }
+        },
       });
     });
   }
@@ -154,41 +155,49 @@ export class TinyElement extends HTMLElement {
    * Set event handlers scope to `this`.
    */
   _setHandlersScope() {
-    [...this.metadata.handlers].forEach(([, handlers]) => { [...handlers].forEach(handler => {
-      this[handler.handler] = this[handler.handler].bind(this);
-    })});
+    [...this.metadata.handlers].forEach(([, handlers]) => {
+      [...handlers].forEach(handler => {
+        this[handler.handler] = this[handler.handler].bind(this);
+      });
+    });
   }
 
   /**
    * Read non-window event handlers from metadata and subscribe events.
    */
   _applyNonWindowHandlers() {
-    [...this.metadata.handlers].filter(([element]) => element !== 'window').forEach(([element, handlers]) => {
-      [...handlers].forEach(({ eventName, all, handler }) => {
-        let els;
+    [...this.metadata.handlers]
+      .filter(([element]) => element !== 'window')
+      .forEach(([element, handlers]) => {
+        [...handlers].forEach(({ eventName, all, handler }) => {
+          let els;
 
-        if (element === 'self') {
-          els = [this];
-        } else if (all) {
-          els = this.$$(element);
-        } else {
-          els = [this.$(element)];
-        }
+          if (element === 'self') {
+            els = [this];
+          } else if (all) {
+            els = this.$$(element);
+          } else {
+            els = [this.$(element)];
+          }
 
-        els.forEach(el => {
-          this.on(eventName, this[handler], el);
+          els.forEach(el => {
+            this.on(eventName, this[handler], el);
+          });
         });
       });
-    });
   }
 
   /**
    * Read window event handlers from metadata and subscribe events.
    */
   _applyWindowHandlers() {
-    [...this.metadata.handlers].filter(([element]) => element === 'window').forEach(([, handlers]) => {
-      handlers.forEach(({ eventName, handler }) => this.on(eventName, this[handler], window));
-    });
+    [...this.metadata.handlers]
+      .filter(([element]) => element === 'window')
+      .forEach(([, handlers]) => {
+        handlers.forEach(({ eventName, handler }) =>
+          this.on(eventName, this[handler], window),
+        );
+      });
   }
 
   /**
@@ -268,13 +277,15 @@ export class TinyElement extends HTMLElement {
    * Life-cycle handler invoked whenever the element is disconnected from DOM.
    */
   disconnectedCallback() {
-    const {
-      handlers = {}
-    } = this._metadata;
+    const { handlers = {} } = this._metadata;
 
-    Object.entries(handlers).filter(([element]) => element === 'window').forEach(([, handlers]) => {
-      handlers.forEach(({ eventName, handler }) => this.off(eventName, this[handler].bind(this), window));
-    });
+    Object.entries(handlers)
+      .filter(([element]) => element === 'window')
+      .forEach(([, handlers]) => {
+        handlers.forEach(({ eventName, handler }) =>
+          this.off(eventName, this[handler].bind(this), window),
+        );
+      });
 
     this.onDisconnected();
   }
@@ -287,27 +298,26 @@ export class TinyElement extends HTMLElement {
    */
   create(name, options) {
     const el = document.createElement(name),
-      {
-        id,
-        cls,
-        props,
-        attrs,
-        styles,
-        events,
-        parent,
-        html,
-        children
-      } = options || {};
+      { id, cls, props, attrs, styles, events, parent, html, children } =
+        options || {};
 
     id && (el.id = id);
     Array.isArray(cls) && this.addClass(cls, el);
-    typeof props === 'object' && Object.entries(props).forEach(([key, value]) => el[key] = value);
-    typeof attrs === 'object' && Object.entries(attrs).forEach(([key, value]) => el.setAttribute(key, value));
+    typeof props === 'object' &&
+      Object.entries(props).forEach(([key, value]) => (el[key] = value));
+    typeof attrs === 'object' &&
+      Object.entries(attrs).forEach(([key, value]) =>
+        el.setAttribute(key, value),
+      );
     typeof styles === 'object' && this.addStyle(styles, el);
-    typeof events === 'object' && Object.entries(events).forEach(([key, value]) => this.on(key, value, el));
+    typeof events === 'object' &&
+      Object.entries(events).forEach(([key, value]) => this.on(key, value, el));
     typeof html === 'string' && this.updateHtml(html, el);
     parent && this.addChildren([el], parent);
-    Array.isArray(children) && children.forEach(({ name, options }) => this.create(name, {...options, parent: el }));
+    Array.isArray(children) &&
+      children.forEach(({ name, options }) =>
+        this.create(name, { ...options, parent: el }),
+      );
 
     return el;
   }
@@ -326,7 +336,9 @@ export class TinyElement extends HTMLElement {
     }
 
     if (el === this) {
-      return this._metadata.shadow ? this._shadowRoot.querySelector(selector) : this.querySelector(selector);
+      return this._metadata.shadow
+        ? this._shadowRoot.querySelector(selector)
+        : this.querySelector(selector);
     }
 
     if (el instanceof TinyElement) {
@@ -350,7 +362,9 @@ export class TinyElement extends HTMLElement {
     }
 
     if (el === this) {
-      return this._metadata.shadow ? this._shadowRoot.querySelectorAll(selector) : this.querySelectorAll(selector);
+      return this._metadata.shadow
+        ? this._shadowRoot.querySelectorAll(selector)
+        : this.querySelectorAll(selector);
     }
 
     if (el instanceof TinyElement) {
@@ -451,7 +465,9 @@ export class TinyElement extends HTMLElement {
       return this;
     }
 
-    Object.entries(obj).forEach(([key, value]) => value === null ? this.removeAttr(key) : el.setAttribute(key, value));
+    Object.entries(obj).forEach(([key, value]) =>
+      value === null ? this.removeAttr(key) : el.setAttribute(key, value),
+    );
     return this;
   }
 
@@ -468,7 +484,9 @@ export class TinyElement extends HTMLElement {
       return this;
     }
 
-    (Array.isArray(attrs) ? attrs : [attrs]).forEach(attr => el.removeAttribute(attr));
+    (Array.isArray(attrs) ? attrs : [attrs]).forEach(attr =>
+      el.removeAttribute(attr),
+    );
   }
 
   /**
@@ -488,10 +506,13 @@ export class TinyElement extends HTMLElement {
    * @returns {TinyElement}
    */
   setData(obj, el = this) {
-    this.setAttr(Object.entries(obj).reduce((acc, [key, value]) => {
-      acc[`data-${key}`] = value;
-      return acc;
-    }, {}), el);
+    this.setAttr(
+      Object.entries(obj).reduce((acc, [key, value]) => {
+        acc[`data-${key}`] = value;
+        return acc;
+      }, {}),
+      el,
+    );
     return this;
   }
 
@@ -565,7 +586,9 @@ export class TinyElement extends HTMLElement {
       return this;
     }
 
-    (Array.isArray(styles) ? styles : [styles]).forEach(style => el.style[style] = null);
+    (Array.isArray(styles) ? styles : [styles]).forEach(
+      style => (el.style[style] = null),
+    );
     return this;
   }
 
@@ -597,7 +620,9 @@ export class TinyElement extends HTMLElement {
       return this;
     }
 
-    [...(children instanceof HTMLElement ? [children] : children)].forEach(child => parent.appendChild(child));
+    [...(children instanceof HTMLElement ? [children] : children)].forEach(
+      child => parent.appendChild(child),
+    );
     this._applyNonWindowHandlers();
     return this;
   }
@@ -684,7 +709,8 @@ export class TinyElement extends HTMLElement {
       return this;
     }
 
-    const elEventHandlers = el['__event_handlers__'] = el['__event_handlers__'] || new Map();
+    const elEventHandlers = (el['__event_handlers__'] =
+      el['__event_handlers__'] || new Map());
     if (!elEventHandlers.has(eventName)) {
       elEventHandlers.set(eventName, new Set());
     }
@@ -715,7 +741,8 @@ export class TinyElement extends HTMLElement {
 
     el.removeEventListener(eventName, handler);
 
-    const elEventHandlers = el['__event_handlers__'] = el['__event_handlers__'] || new Map();
+    const elEventHandlers = (el['__event_handlers__'] =
+      el['__event_handlers__'] || new Map());
     if (!elEventHandlers.has(eventName)) {
       return this;
     }
@@ -763,25 +790,34 @@ export class TinyElement extends HTMLElement {
    */
   runDecorators() {
     const { bindings } = this._metadata;
-    [...bindings].filter(([, propertyBindings]) => [...propertyBindings].filter(b => b.type === 'input').length === 1).forEach(([property, propertyBindings]) => {
-      if (this.changes.has(property)) {
-        [...propertyBindings].forEach(propertyBinding => propertyBinding.type !== 'input' && propertyBinding.apply(this, this[property]));
-      }
-    });
+    [...bindings]
+      .filter(
+        ([, propertyBindings]) =>
+          [...propertyBindings].filter(b => b.type === 'input').length === 1,
+      )
+      .forEach(([property, propertyBindings]) => {
+        if (this.changes.has(property)) {
+          [...propertyBindings].forEach(
+            propertyBinding =>
+              propertyBinding.type !== 'input' &&
+              propertyBinding.apply(this, this[property]),
+          );
+        }
+      });
   }
 
   /**
    * Invoked after the element is connected to DOM.
    */
-  onConnected() { }
+  onConnected() {}
 
   /**
    * Invoked after the element is disconnected to DOM.
    */
-  onDisconnected() { }
+  onDisconnected() {}
 
   /**
    * Should be overwritten by sub-components to update the decorators/DOM.
    */
-  onChanges(changes) { }
+  onChanges(changes) {}
 }
