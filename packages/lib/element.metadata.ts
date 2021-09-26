@@ -1,46 +1,43 @@
+import { AttributeValueDataType } from './constants';
+
 /**
  * Encapsulates all the metadata information of an element.
  */
 export class ElementMetadata {
   /**
    * The name of the registered element.
-   * @type {String}
    */
-  name = null;
+  name: string = null;
 
   /**
    * The template.
-   * @type {String}
    */
-  tpl = null;
+  tpl: string = null;
 
   /**
    * True if shadow dom is enabled.
-   * @type {Boolean}
    */
-  shadow = false;
+  shadow: boolean = false;
 
   /**
    * The DOM accessors dictionary.
-   * @type {Map}
    */
-  accessors = new Map();
+  accessors = new Map<string, { selector: string; all: boolean }>();
 
   /**
    * The event handlers dictionary.
-   * @type {Map}
    */
-  handlers = new Map();
+  handlers = new Map<
+    string,
+    Set<{ eventName: string; handler: string; all: boolean }>
+  >();
 
   /**
    * The array of input properties.
-   * @type {Set}
    */
-  inputs = new Set();
-
-  /**
-   * The property bindings.
-   * @type {Map}
-   */
-  bindings = new Map();
+  inputs = new Set<{
+    property: string;
+    attribute: boolean;
+    dataType: AttributeValueDataType;
+  }>();
 }
