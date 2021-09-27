@@ -1,0 +1,40 @@
+{
+  "compilerOptions": {
+    "baseUrl": "./",
+    "outDir": "dist",
+    "skipLibCheck": true,
+    "allowUnreachableCode": false,
+    "allowUnusedLabels": false,
+    "composite": true,
+    "declaration": true,
+    "declarationMap": true,
+    "forceConsistentCasingInFileNames": true,
+    "downlevelIteration": true,
+    "module": "commonjs",
+    "noEmitOnError": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
+    "noUnusedLocals": false,
+    "experimentalDecorators": true,
+    "noImplicitOverride": false,
+    "noImplicitAny": false,
+    "pretty": true,
+    "sourceMap": true,
+    "strict": true,
+    "strictNullChecks": false,
+    "target": "es2020",
+    "incremental": true,
+    "newLine": "LF",
+    "lib": [
+      "es2018",
+      "dom",
+      "dom.iterable"
+    ]
+  },
+  "files": [
+    "dev.ts"
+  ],
+  "include": [
+    "packages/**/*.ts"
+  ]
+}
