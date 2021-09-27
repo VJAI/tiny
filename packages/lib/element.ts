@@ -220,10 +220,10 @@ export abstract class TinyElement extends HTMLElement {
     }
 
     const { oldValue, newValue } = this._changes.get(prop);
-    /*if (oldValue === newValue) {
-     this._changes.delete(prop);
-     return;
-     }*/
+    if (oldValue === newValue && this._initialized) {
+      this._changes.delete(prop);
+      return;
+    }
 
     this._changes.set(prop, { oldValue, newValue: value });
   }
