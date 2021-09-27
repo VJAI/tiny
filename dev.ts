@@ -1,4 +1,4 @@
-import { TinyElement, element, query, handle, input } from '../lib';
+import { TinyElement, element, query, handle, input } from './packages/lib';
 
 @element(
   'todo-app',
@@ -9,7 +9,7 @@ import { TinyElement, element, query, handle, input } from '../lib';
   </form>
   <div class="list">
   </div>
-</div>`,
+</div>`
 )
 class TodoApp extends TinyElement {
   @query('.list')
@@ -27,8 +27,8 @@ class TodoApp extends TinyElement {
 
     const todo = this.create('todo-item', {
       props: {
-        item: this.input.value,
-      },
+        item: this.input.value
+      }
     });
 
     this.addChildren([todo], this.todosContainer);
@@ -41,7 +41,7 @@ class TodoApp extends TinyElement {
   `<div>
   <span class="text"></span>
   <button type="button" style="font-size:10px" class="delete">❌</button>
-</div>`,
+</div>`
 )
 class Todo extends TinyElement {
   @input(true)
@@ -66,14 +66,7 @@ class Todo extends TinyElement {
   }
 }
 
-// document.addEventListener('DOMContentLoaded', () => {
-//   const board = document.createElement('todo-app');
-//   document.body.appendChild(board);
-// });
-
-export default {
-  component: TodoApp,
-  title: 'Examples/ToDo',
-};
-
-export const List = () => `<todo-app/>`;
+document.addEventListener('DOMContentLoaded', () => {
+  const board = document.createElement('todo-app');
+  document.body.appendChild(board);
+});

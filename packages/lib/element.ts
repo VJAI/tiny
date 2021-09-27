@@ -1,68 +1,78 @@
 import { ELEMENT_META_KEY, AttributeValueDataType } from './constants';
-import { ElementMetadata } from './element.metadata';
 import { isVoid } from './util';
+import { ElementMetadata } from './element.metadata';
+
+export interface KeyValue {
+  [key: string]: any;
+}
+
+export interface EventMap {
+  [key: string]: () => void;
+}
+
+export interface TinyElementCreateOptions {
+  id?: string;
+  cls?: string | Array<string>;
+  props?: KeyValue;
+  attrs?: KeyValue;
+  styles?: KeyValue;
+  events?: EventMap;
+  parent?: string | TinyElement | HTMLElement;
+  html?: string;
+  children?: Array<{ name: string; options: TinyElementCreateOptions }>;
+}
 
 /**
  * Represents the base class for all Tiny elements.
  * Simplifies developing components using native browser technologies.
  */
-export class TinyElement extends HTMLElement {
+export abstract class TinyElement extends HTMLElement {
+  /**
+   * The metadata of the component.
+   */
+  private readonly _metadata: ElementMetadata = null;
+
   /**
    * True if the component is initialized.
-   * @type {Boolean}
    */
-  _initialized = false;
+  private _initialized: boolean = false;
 
   /**
    * True if the component is rendered.
-   * @type {Boolean}
    */
-  _rendered = false;
-
-  /**
-   * The metadata of the component.
-   * @type {ElementMetadata}
-   */
-  _metadata = null;
+  private _rendered: boolean = false;
 
   /**
    * The input properties changes dictionary.
    * @type {Map}
    */
-  _changes = new Map();
+  private _changes = new Map<string, { oldValue: any; newValue: any }>();
 
   /**
    * The input props values.
    * @type {Map}
    */
-  _props = new Map();
-
-  /**
-   * The property binding values.
-   * @type {Map}
-   */
-  _bindings = new Map();
+  private _props = new Map<string, any>();
 
   /**
    * Shadow root.
    */
-  _shadowRoot = null;
+  private _shadowRoot: ShadowRoot = null;
 
   /**
-   * TODO: Come-up with a better strategy!
+   * The DOM Update timer.
    */
-  _updateTimer = null;
+  private _updateTimer: any = null;
 
   /**
    * Returns the element metadata.
-   * @returns {ElementMetadata}
    */
   get metadata() {
     return this._metadata;
   }
 
   /**
-   * @returns {Map}
+   * Returns the changes.
    */
   get changes() {
     return this._changes;
@@ -70,16 +80,15 @@ export class TinyElement extends HTMLElement {
 
   /**
    * Returns true if there are changes.
-   * @returns {Boolean}
    */
   get hasChanges() {
     return this.changes.size > 0;
   }
 
   /**
-   * @ctor
+   * constructor.
    */
-  constructor() {
+  protected constructor() {
     super();
     this._metadata = this.constructor[ELEMENT_META_KEY];
   }
@@ -87,12 +96,12 @@ export class TinyElement extends HTMLElement {
   /**
    * Read accessors from metadata and re-define `getters` for applied props.
    */
-  _applyAccessors() {
+  private _applyAccessors() {
     [...this.metadata.accessors].forEach(([prop, { selector, all }]) => {
       Object.defineProperty(this, prop, {
         get() {
           return all ? this.$$(selector) : this.$(selector);
-        },
+        }
       });
     });
   }
@@ -100,11 +109,11 @@ export class TinyElement extends HTMLElement {
   /**
    * Read inputs from metadata and re-define `getters` and `setters` for applied props.
    */
-  _applyInputs() {
-    [...this.metadata.inputs].forEach(({ property, attribute, datatype }) => {
-      let attrValue = this.getAttr(property);
+  private _applyInputs() {
+    [...this.metadata.inputs].forEach(({ property, attribute, dataType }) => {
+      let attrValue: any = this.getAttr(property);
 
-      if (datatype === AttributeValueDataType.NUMBER && attrValue) {
+      if (dataType === AttributeValueDataType.NUMBER && attrValue) {
         attrValue = parseFloat(attrValue);
       } else {
         if (attrValue === 'true' || attrValue === '') {
@@ -128,25 +137,26 @@ export class TinyElement extends HTMLElement {
 
       this._pushChange(property, value);
       this._props.set(property, value);
+      const target = this;
       Object.defineProperty(this, property, {
         get() {
-          return this._props.get(property);
+          return target._props.get(property);
         },
         set(value) {
           if (attribute) {
             if (value) {
-              this.setAttr({
-                [property]: !isVoid(value) ? value.toString() : value,
+              target.setAttr({
+                [property]: !isVoid(value) ? value.toString() : value
               });
             } else {
-              this.removeAttr(property);
+              target.removeAttr(property);
             }
           }
 
-          this._pushChange(property, value);
-          this._props.set(property, value);
-          this._initialized && this._triggerUpdate();
-        },
+          target._pushChange(property, value);
+          target._props.set(property, value);
+          target._initialized && target._triggerUpdate();
+        }
       });
     });
   }
@@ -154,18 +164,18 @@ export class TinyElement extends HTMLElement {
   /**
    * Set event handlers scope to `this`.
    */
-  _setHandlersScope() {
-    [...this.metadata.handlers].forEach(([, handlers]) => {
-      [...handlers].forEach(handler => {
-        this[handler.handler] = this[handler.handler].bind(this);
-      });
-    });
+  private _setHandlersScope() {
+    [...this.metadata.handlers].forEach(([, handlers]) =>
+      [...handlers].forEach(
+        handler => (this[handler.handler] = this[handler.handler].bind(this))
+      )
+    );
   }
 
   /**
-   * Read non-window event handlers from metadata and subscribe events.
+   * Read non-window event handlers from metadata and subscribe to events.
    */
-  _applyNonWindowHandlers() {
+  private _applyNonWindowHandlers() {
     [...this.metadata.handlers]
       .filter(([element]) => element !== 'window')
       .forEach(([element, handlers]) => {
@@ -180,9 +190,7 @@ export class TinyElement extends HTMLElement {
             els = [this.$(element)];
           }
 
-          els.forEach(el => {
-            this.on(eventName, this[handler], el);
-          });
+          els.forEach(el => this.on(eventName, this[handler], el));
         });
       });
   }
@@ -190,22 +198,22 @@ export class TinyElement extends HTMLElement {
   /**
    * Read window event handlers from metadata and subscribe events.
    */
-  _applyWindowHandlers() {
+  private _applyWindowHandlers() {
     [...this.metadata.handlers]
       .filter(([element]) => element === 'window')
-      .forEach(([, handlers]) => {
+      .forEach(([, handlers]) =>
         handlers.forEach(({ eventName, handler }) =>
-          this.on(eventName, this[handler], window),
-        );
-      });
+          this.on(eventName, this[handler], window)
+        )
+      );
   }
 
   /**
    * Push the changed property and it's value.
-   * @param {string} prop The property name.
-   * @param {*} value The property value.
+   * @param prop The property name.
+   * @param value The property value.
    */
-  _pushChange(prop, value) {
+  private _pushChange(prop: string, value: any) {
     if (!this._changes.has(prop)) {
       this._changes.set(prop, { oldValue: this[prop], newValue: value });
       return;
@@ -213,9 +221,9 @@ export class TinyElement extends HTMLElement {
 
     const { oldValue, newValue } = this._changes.get(prop);
     /*if (oldValue === newValue) {
-      this._changes.delete(prop);
-      return;
-    }*/
+     this._changes.delete(prop);
+     return;
+     }*/
 
     this._changes.set(prop, { oldValue, newValue: value });
   }
@@ -223,7 +231,7 @@ export class TinyElement extends HTMLElement {
   /**
    * Triggers update.
    */
-  _triggerUpdate() {
+  private _triggerUpdate() {
     if (this._updateTimer) {
       return;
     }
@@ -233,9 +241,9 @@ export class TinyElement extends HTMLElement {
 
   /**
    * Returns the passed element or based on selector.
-   * @param {*} el
+   * @param el
    */
-  _element(el) {
+  private _element(el: string | Window | HTMLElement | TinyElement) {
     if (el === 'window' || el === window) {
       return el;
     }
@@ -248,13 +256,13 @@ export class TinyElement extends HTMLElement {
       return el;
     }
 
-    return this.$(el);
+    return this.$(el as string);
   }
 
   /**
    * Life-cycle handler which is invoked whenever the element is connected to DOM.
    */
-  connectedCallback() {
+  protected connectedCallback() {
     if (!this._rendered) {
       this.render();
       this._rendered = true;
@@ -276,27 +284,40 @@ export class TinyElement extends HTMLElement {
   /**
    * Life-cycle handler invoked whenever the element is disconnected from DOM.
    */
-  disconnectedCallback() {
-    const { handlers = {} } = this._metadata;
-
-    Object.entries(handlers)
+  protected disconnectedCallback() {
+    [...this.metadata.handlers]
       .filter(([element]) => element === 'window')
-      .forEach(([, handlers]) => {
+      .forEach(([, handlers]) =>
         handlers.forEach(({ eventName, handler }) =>
-          this.off(eventName, this[handler].bind(this), window),
-        );
-      });
+          this.off(eventName, this[handler].bind(this), window)
+        )
+      );
 
     this.onDisconnected();
   }
 
   /**
+   * Invoked after the element is connected to DOM.
+   */
+  protected onConnected() {}
+
+  /**
+   * Invoked after the element is disconnected to DOM.
+   */
+  protected onDisconnected() {}
+
+  /**
+   * Should be overwritten by sub-components to update the decorators/DOM.
+   */
+  protected onChanges(changes) {}
+
+  /**
    * Create new element and returns it.
-   * @param {String} name The name of the element.
-   * @param {Object} options The element options.
+   * @param name The name of the element.
+   * @param options The element options.
    * @returns {HTMLElement}
    */
-  create(name, options) {
+  create(name: string, options: TinyElementCreateOptions) {
     const el = document.createElement(name),
       { id, cls, props, attrs, styles, events, parent, html, children } =
         options || {};
@@ -307,7 +328,7 @@ export class TinyElement extends HTMLElement {
       Object.entries(props).forEach(([key, value]) => (el[key] = value));
     typeof attrs === 'object' &&
       Object.entries(attrs).forEach(([key, value]) =>
-        el.setAttribute(key, value),
+        el.setAttribute(key, value)
       );
     typeof styles === 'object' && this.addStyle(styles, el);
     typeof events === 'object' &&
@@ -316,20 +337,19 @@ export class TinyElement extends HTMLElement {
     parent && this.addChildren([el], parent);
     Array.isArray(children) &&
       children.forEach(({ name, options }) =>
-        this.create(name, { ...options, parent: el }),
+        this.create(name, { ...options, parent: el })
       );
 
     return el;
   }
 
   /**
-   * Queries and returns the element that matches the passed CSS selector.
-   * @param {String} selector The CSS selector.
-   * @param {HTMLElement|String} [el=this] The element.
-   * @returns {HTMLElement}
+   * Queries and returns the first element that matches the passed CSS selector.
+   * @param selector The CSS selector.
+   * @param element The parent to query.
    */
-  $(selector, el = this) {
-    el = this._element(el);
+  $(selector: string, element: string | TinyElement | HTMLElement = this) {
+    const el = this._element(element);
 
     if (!el) {
       return this;
@@ -349,13 +369,12 @@ export class TinyElement extends HTMLElement {
   }
 
   /**
-   * Queries and returns the elements that matches the passed CSS selector.
-   * @param {String} selector The CSS selector.
-   * @param {HTMLElement|String} [el=this] The element.
-   * @returns {HTMLCollection}
+   * Queries and returns all the elements that matches the passed CSS selector.
+   * @param selector The CSS selector.
+   * @param element The parent to query.
    */
-  $$(selector, el = this) {
-    el = this._element(el);
+  $$(selector: string, element: string | TinyElement | HTMLElement = this) {
+    const el = this._element(element);
 
     if (!el) {
       return this;
@@ -376,12 +395,14 @@ export class TinyElement extends HTMLElement {
 
   /**
    * Adds single or multiple CSS classes.
-   * @param {String|Array<String>} classes The CSS classes.
-   * @param {HTMLElement|String} [el=this] The element.
-   * @returns {TinyElement}
+   * @param classes The CSS classes.
+   * @param element The element.
    */
-  addClass(classes, el = this) {
-    el = this._element(el);
+  addClass(
+    classes: string | Array<string>,
+    element: string | TinyElement | HTMLElement = this
+  ) {
+    const el = this._element(element);
 
     if (!el) {
       return this;
@@ -392,13 +413,15 @@ export class TinyElement extends HTMLElement {
   }
 
   /**
-   * Removes single or multiple classes.
-   * @param {String|Array<String>} classes
-   * @param {HTMLElement|String} [el=this] The element.
-   * @returns {TinyElement}
+   * Removes single or multiple CSS classes from the element.
+   * @param classes Single or array of css class names.
+   * @param element The element.
    */
-  removeClass(classes, el = this) {
-    el = this._element(el);
+  removeClass(
+    classes: string | Array<string>,
+    element: string | TinyElement | HTMLElement = this
+  ) {
+    const el = this._element(element);
 
     if (!el) {
       return this;
@@ -409,12 +432,11 @@ export class TinyElement extends HTMLElement {
   }
 
   /**
-   * Clear all classes.
-   * @param {HTMLElement|String} [el=this] The element.
-   * @returns {TinyElement}
+   * Clears all CSS classes.
+   * @param element The element.
    */
-  clearClasses(el = this) {
-    el = this._element(el);
+  clearClasses(element: string | TinyElement | HTMLElement = this) {
+    const el = this._element(element);
 
     if (!el) {
       return this;
@@ -425,28 +447,30 @@ export class TinyElement extends HTMLElement {
   }
 
   /**
-   * Toggles source css classes with the target.
-   * @param {String|Array<String>} sourceCls Source css class(es).
-   * @param {String|Array<String>} targetCls Target css class(es).
-   * @param {HTMLElement|String} [el=this] The element.
-   * @returns {TinyElement}
+   * Toggles source css classes with the target css classes.
+   * @param sourceCls Source css class(es).
+   * @param targetCls Target css class(es).
+   * @param element The element.
    */
-  toggleClass(sourceCls, targetCls, el = this) {
-    this.removeClass(sourceCls, el).addClass(targetCls, el);
+  toggleClass(
+    sourceCls: string | Array<string>,
+    targetCls: string | Array<string>,
+    element: string | TinyElement | HTMLElement = this
+  ) {
+    this.removeClass(sourceCls, element).addClass(targetCls, element);
     return this;
   }
 
   /**
    * Returns the attribute value of the element.
-   * @param {String} name The attribute name.
-   * @param {HTMLElement|String} [el=this] The element.
-   * @returns {String}
+   * @param name The attribute name.
+   * @param element The element.
    */
-  getAttr(name, el = this) {
-    el = this._element(el);
+  getAttr(name: string, element: string | TinyElement | HTMLElement = this) {
+    const el = this._element(element);
 
     if (!el) {
-      return;
+      return this;
     }
 
     return el.getAttribute(name);
@@ -454,64 +478,65 @@ export class TinyElement extends HTMLElement {
 
   /**
    * Sets attributes for element from the passed object.
-   * @param {Object} obj The attributes map.
-   * @param {HTMLElement|String} [el=this] The element.
-   * @returns {TinyElement}
+   * @param obj The attributes map.
+   * @param element The element.
    */
-  setAttr(obj, el = this) {
-    el = this._element(el);
+  setAttr(obj: KeyValue, element: string | TinyElement | HTMLElement = this) {
+    const el = this._element(element);
 
     if (!el) {
       return this;
     }
 
     Object.entries(obj).forEach(([key, value]) =>
-      value === null ? this.removeAttr(key) : el.setAttribute(key, value),
+      value === null ? this.removeAttr(key) : el.setAttribute(key, value)
     );
     return this;
   }
 
   /**
    * Removes the passed attributes from the element.
-   * @param {String|Array<String>} attrs The attribute(s).
-   * @param {HTMLElement|String} [el=this] The element.
-   * @returns {TinyElement}
+   * @param attrs The attribute(s).
+   * @param element The element.
    */
-  removeAttr(attrs, el = this) {
-    el = this._element(el);
+  removeAttr(
+    attrs: string | Array<string>,
+    element: string | TinyElement | HTMLElement = this
+  ) {
+    const el = this._element(element);
 
     if (!el) {
       return this;
     }
 
     (Array.isArray(attrs) ? attrs : [attrs]).forEach(attr =>
-      el.removeAttribute(attr),
+      el.removeAttribute(attr)
     );
+
+    return this;
   }
 
   /**
    * Returns the value of the data attribute.
-   * @param {string} name The data attribute name.
-   * @param {HTMLElement|String} [el=this] The element.
-   * @returns {String}
+   * @param name The data attribute name.
+   * @param el The element.
    */
-  getData(name, el = this) {
+  getData(name: string, el: string | TinyElement | HTMLElement = this) {
     return this.getAttr(`data-${name}`, el);
   }
 
   /**
    * Sets object of data attributes.
-   * @param {Object} obj
-   * @param {HTMLElement|String} [el=this] The element.
-   * @returns {TinyElement}
+   * @param obj The data dictionary.
+   * @param el The element.
    */
-  setData(obj, el = this) {
+  setData(obj: KeyValue, el: string | TinyElement | HTMLElement = this) {
     this.setAttr(
       Object.entries(obj).reduce((acc, [key, value]) => {
         acc[`data-${key}`] = value;
         return acc;
       }, {}),
-      el,
+      el
     );
     return this;
   }
@@ -519,11 +544,10 @@ export class TinyElement extends HTMLElement {
   /**
    * Returns the passed style's value.
    * @param {String} name The style name.
-   * @param {HTMLElement|String} el The element.
-   * @returns {String}
+   * @param {HTMLElement|String} element The element.
    */
-  getStyle(name, el = this) {
-    el = this._element(el);
+  getStyle(name: string, element: string | TinyElement | HTMLElement = this) {
+    const el = this._element(element);
 
     if (!el) {
       return;
@@ -534,12 +558,14 @@ export class TinyElement extends HTMLElement {
 
   /**
    * Add passed styles.
-   * @param {Object} styles The styles object.
-   * @param {HTMLElement|String} [el=this] The element.
-   * @returns {TinyElement}
+   * @param styles The styles object.
+   * @param element The element.
    */
-  addStyle(styles, el = this) {
-    el = this._element(el);
+  addStyle(
+    styles: KeyValue,
+    element: string | TinyElement | HTMLElement = this
+  ) {
+    const el = this._element(element);
 
     if (!el) {
       return this;
@@ -559,11 +585,10 @@ export class TinyElement extends HTMLElement {
 
   /**
    * Clears the passed styles.
-   * @param {HTMLElement|String} [el=this] The element.
-   * @returns {TinyElement}
+   * @param element The element.
    */
-  clearStyles(el = this) {
-    el = this._element(el);
+  clearStyles(element: string | TinyElement | HTMLElement = this) {
+    const el = this._element(element);
 
     if (!el) {
       return this;
@@ -575,53 +600,57 @@ export class TinyElement extends HTMLElement {
 
   /**
    * Removes the passed style(s).
-   * @param {String|Array<String>} styles Style(s).
-   * @param {HTMLElement|String} [el=this] The element.
-   * @returns {TinyElement}
+   * @param styles Style(s).
+   * @param element The element.
    */
-  removeStyles(styles, el = this) {
-    el = this._element(el);
+  removeStyles(
+    styles: string | Array<string>,
+    element: string | TinyElement | HTMLElement = this
+  ) {
+    const el = this._element(element);
 
     if (!el) {
       return this;
     }
 
     (Array.isArray(styles) ? styles : [styles]).forEach(
-      style => (el.style[style] = null),
+      style => (el.style[style] = null)
     );
     return this;
   }
 
   /**
    * Returns the child from the passed index.
-   * @param {Number} index The index.
-   * @param {HTMLElement|String} parent The parent element.
+   * @param index The index.
+   * @param parent The parent element.
    */
-  getChild(index, parent = this) {
-    parent = this._element(parent);
+  getChild(index: number, parent: string | TinyElement | HTMLElement = this) {
+    const el = this._element(parent);
 
-    if (!parent) {
+    if (!el) {
       return this;
     }
 
-    return parent.children[index];
+    return el.children[index];
   }
 
   /**
    * Inserts the passed elements as children.
-   * @param {HTMLElement|Array<HTMLElement>|HTMLCollection} children The elements to be added.
-   * @param {HTMLElement|String} [el=this] The element.
-   * @returns {TinyElement}
+   * @param children The elements to be added.
+   * @param parent The element.
    */
-  addChildren(children, parent = this) {
-    parent = this._element(parent);
+  addChildren(
+    children: HTMLElement | Array<HTMLElement> | HTMLCollection,
+    parent: string | TinyElement | HTMLElement = this
+  ) {
+    const el = this._element(parent);
 
-    if (!parent || !children) {
+    if (!el || !children) {
       return this;
     }
 
     [...(children instanceof HTMLElement ? [children] : children)].forEach(
-      child => parent.appendChild(child),
+      child => el.appendChild(child)
     );
     this._applyNonWindowHandlers();
     return this;
@@ -629,11 +658,10 @@ export class TinyElement extends HTMLElement {
 
   /**
    * Removes all the children.
-   * @param {HTMLElement|String} [el=this] The element.
-   * @returns {TinyElement}
+   * @param element The element.
    */
-  removeChildren(el = this) {
-    el = this._element(el);
+  removeChildren(element: string | TinyElement | HTMLElement = this) {
+    const el = this._element(element);
 
     if (!el) {
       return this;
@@ -648,12 +676,11 @@ export class TinyElement extends HTMLElement {
 
   /**
    * Updates html of the element.
-   * @param {String} html The html.
-   * @param {HTMLElement|String} [el=this] The element.
-   * @returns {TinyElement}
+   * @param html The html.
+   * @param element The element.
    */
-  updateHtml(html, el = this) {
-    el = this._element(el);
+  updateHtml(html: string, element: string | TinyElement | HTMLElement = this) {
+    const el = this._element(element);
 
     if (!el) {
       return this;
@@ -665,11 +692,10 @@ export class TinyElement extends HTMLElement {
 
   /**
    * Shows the element.
-   * @param {HTMLElement|String} [el=this] The element.
-   * @returns {TinyElement}
+   * @param element The element.
    */
-  show(el = this) {
-    el = this._element(el);
+  show(element: string | TinyElement | HTMLElement = this) {
+    const el = this._element(element);
 
     if (!el) {
       return this;
@@ -681,11 +707,10 @@ export class TinyElement extends HTMLElement {
 
   /**
    * Hides the element.
-   * @param {HTMLElement|String} [el=this] The element.
-   * @returns {TinyElement}
+   * @param element The element.
    */
-  hide(el = this) {
-    el = this._element(el);
+  hide(element: string | TinyElement | HTMLElement = this) {
+    const el = this._element(element);
 
     if (!el) {
       return this;
@@ -697,13 +722,16 @@ export class TinyElement extends HTMLElement {
 
   /**
    * Subscribes to the event.
-   * @param {String} eventName Event name.
-   * @param {Function} handler Event handler.
-   * @param {HTMLElement|String} [el=this] The element.
-   * @returns {TinyElement}
+   * @param eventName Event name.
+   * @param handler Event handler.
+   * @param element The element.
    */
-  on(eventName, handler, el = this) {
-    el = this._element(el);
+  on(
+    eventName,
+    handler,
+    element: string | TinyElement | HTMLElement | Window = this
+  ) {
+    const el = this._element(element);
 
     if (!el) {
       return this;
@@ -727,13 +755,16 @@ export class TinyElement extends HTMLElement {
 
   /**
    * Un-subscribes from the event.
-   * @param {String} eventName Event name.
-   * @param {Function} handler Event handler.
-   * @param {HTMLElement|String} [el=this] The element.
-   * @returns {TinyElement}
+   * @param eventName Event name.
+   * @param handler Event handler.
+   * @param element The element.
    */
-  off(eventName, handler, el = this) {
-    el = this._element(el);
+  off(
+    eventName,
+    handler,
+    element: string | TinyElement | HTMLElement | Window = this
+  ) {
+    const el = this._element(element);
 
     if (!el) {
       return this;
@@ -754,7 +785,6 @@ export class TinyElement extends HTMLElement {
 
   /**
    * Renders the element.
-   * @returns {TinyElement}
    */
   render() {
     if (!this._metadata.tpl) {
@@ -779,45 +809,8 @@ export class TinyElement extends HTMLElement {
    */
   refresh() {
     this.onChanges(this.changes);
-    this.runDecorators();
     this.changes.clear();
     this._updateTimer && window.clearTimeout(this._updateTimer);
     this._updateTimer = null;
   }
-
-  /**
-   * Runs the decorators to update the DOM.
-   */
-  runDecorators() {
-    const { bindings } = this._metadata;
-    [...bindings]
-      .filter(
-        ([, propertyBindings]) =>
-          [...propertyBindings].filter(b => b.type === 'input').length === 1,
-      )
-      .forEach(([property, propertyBindings]) => {
-        if (this.changes.has(property)) {
-          [...propertyBindings].forEach(
-            propertyBinding =>
-              propertyBinding.type !== 'input' &&
-              propertyBinding.apply(this, this[property]),
-          );
-        }
-      });
-  }
-
-  /**
-   * Invoked after the element is connected to DOM.
-   */
-  onConnected() {}
-
-  /**
-   * Invoked after the element is disconnected to DOM.
-   */
-  onDisconnected() {}
-
-  /**
-   * Should be overwritten by sub-components to update the decorators/DOM.
-   */
-  onChanges(changes) {}
 }
