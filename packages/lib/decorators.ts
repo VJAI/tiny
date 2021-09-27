@@ -104,7 +104,10 @@ export function handle(eventName: string, element = 'self', all = false) {
       { handlers } = metadata;
 
     if (!handlers.has(element)) {
-      handlers.set(element, new Set());
+      handlers.set(
+        element,
+        new Set<{ eventName: string; handler: string; all: boolean }>()
+      );
     }
 
     handlers.get(element).add({ eventName, handler, all });
@@ -112,10 +115,10 @@ export function handle(eventName: string, element = 'self', all = false) {
   };
 }
 
-function getMeta(target) {
+function getMeta(target: Function) {
   return target[ELEMENT_META_KEY] || new ElementMetadata();
 }
 
-function setMeta(target, meta) {
+function setMeta(target: Function, meta: ElementMetadata) {
   target[ELEMENT_META_KEY] = meta;
 }
