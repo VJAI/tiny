@@ -9,7 +9,7 @@ import { AttributeValueDataType, ELEMENT_META_KEY } from './constants';
  */
 export function element(
   name: string,
-  tpl: string,
+  tpl?: string,
   shadow = false
 ): ClassDecorator {
   return (target: any) => {
@@ -51,8 +51,9 @@ export function input(
 /**
  * Decorator that helps to query and return DOM element(s) on accessing the applied property.
  * @param selector The CSS selector.
+ * @param parent The parent element selector.
  */
-export function query(selector: string): PropertyDecorator {
+export function query(selector: string, parent?: string): PropertyDecorator {
   return (target: object, property: string | symbol) => {
     const metadata = getMeta(target.constructor),
       { accessors } = metadata;
@@ -65,7 +66,7 @@ export function query(selector: string): PropertyDecorator {
       );
     }
 
-    accessors.set(property, { selector });
+    accessors.set(property, { selector, parent });
     setMeta(target.constructor, metadata);
   };
 }

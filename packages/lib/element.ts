@@ -7,7 +7,7 @@ export interface KeyValue {
 }
 
 export interface EventMap {
-  [key: string]: () => void;
+  [key: string]: (evt: any) => void;
 }
 
 export interface TinyElementCreateOptions {
@@ -21,6 +21,8 @@ export interface TinyElementCreateOptions {
   html?: string;
   children?: Array<{ name: string; options: TinyElementCreateOptions }>;
 }
+
+export type ElementChanges = Map<string, { oldValue: any; newValue: any }>;
 
 /**
  * Represents the base class for all Tiny elements.
@@ -309,15 +311,17 @@ export abstract class TinyElement extends HTMLElement {
   /**
    * Should be overwritten by sub-components to update the decorators/DOM.
    */
-  protected onChanges(changes) {}
+  protected onChanges(changes: ElementChanges) {}
 
   /**
    * Create new element and returns it.
    * @param name The name of the element.
-   * @param options The element options.
-   * @returns {HTMLElement}
+   * @param [options] The element options.
    */
-  create(name: string, options: TinyElementCreateOptions) {
+  create<T extends HTMLElement>(
+    name: string,
+    options?: TinyElementCreateOptions
+  ): T {
     const el = document.createElement(name),
       { id, cls, props, attrs, styles, events, parent, html, children } =
         options || {};
@@ -340,7 +344,7 @@ export abstract class TinyElement extends HTMLElement {
         this.create(name, { ...options, parent: el })
       );
 
-    return el;
+    return el as T;
   }
 
   /**
@@ -638,10 +642,16 @@ export abstract class TinyElement extends HTMLElement {
    * Inserts the passed elements as children.
    * @param children The elements to be added.
    * @param parent The element.
+   * @param prepend True to prepend the element.
    */
   addChildren(
-    children: HTMLElement | Array<HTMLElement> | HTMLCollection,
-    parent: string | TinyElement | HTMLElement = this
+    children:
+      | HTMLElement
+      | Array<HTMLElement>
+      | HTMLCollection
+      | Array<DocumentFragment>,
+    parent: string | TinyElement | HTMLElement = this,
+    prepend: boolean = false
   ) {
     const el = this._element(parent);
 
@@ -650,7 +660,7 @@ export abstract class TinyElement extends HTMLElement {
     }
 
     [...(children instanceof HTMLElement ? [children] : children)].forEach(
-      child => el.appendChild(child)
+      child => (prepend ? el.prepend(child) : el.appendChild(child))
     );
     this._applyNonWindowHandlers();
     return this;
