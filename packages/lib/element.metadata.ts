@@ -22,7 +22,10 @@ export class ElementMetadata {
   /**
    * The DOM accessors dictionary.
    */
-  accessors = new Map<string, { selector: string; all: boolean }>();
+  accessors = new Map<
+    string,
+    { selector: string; parent?: string; all?: boolean }
+  >();
 
   /**
    * The event handlers dictionary.

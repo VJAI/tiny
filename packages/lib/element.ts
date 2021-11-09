@@ -99,13 +99,15 @@ export abstract class TinyElement extends HTMLElement {
    * Read accessors from metadata and re-define `getters` for applied props.
    */
   private _applyAccessors() {
-    [...this.metadata.accessors].forEach(([prop, { selector, all }]) => {
-      Object.defineProperty(this, prop, {
-        get() {
-          return all ? this.$$(selector) : this.$(selector);
-        }
-      });
-    });
+    [...this.metadata.accessors].forEach(
+      ([prop, { selector, parent, all }]) => {
+        Object.defineProperty(this, prop, {
+          get() {
+            return all ? this.$$(selector, parent) : this.$(selector, parent);
+          }
+        });
+      }
+    );
   }
 
   /**
@@ -113,22 +115,25 @@ export abstract class TinyElement extends HTMLElement {
    */
   private _applyInputs() {
     [...this.metadata.inputs].forEach(({ property, attribute, dataType }) => {
-      let attrValue: any = this.getAttr(property);
-
-      if (dataType === AttributeValueDataType.NUMBER && attrValue) {
-        attrValue = parseFloat(attrValue);
-      } else {
-        if (attrValue === 'true' || attrValue === '') {
-          attrValue = true;
-        } else if (attrValue === 'false') {
-          attrValue = false;
-        }
-      }
-
       let value;
 
       if (attribute) {
-        value = this[property] !== undefined ? this[property] : attrValue;
+        let attrValue: any = this.getAttr(property);
+
+        if (attrValue !== null) {
+          if (
+            dataType === AttributeValueDataType.NUMBER &&
+            !isNaN(parseFloat(attrValue))
+          ) {
+            attrValue = parseFloat(attrValue);
+          } else if (dataType === AttributeValueDataType.BOOLEAN) {
+            attrValue = attrValue === 'true' || attrValue === '';
+          }
+
+          value = attrValue;
+        } else {
+          value = this[property];
+        }
 
         if (!isVoid(value) && value !== attrValue) {
           this.setAttr({ [property]: value });
@@ -254,6 +259,10 @@ export abstract class TinyElement extends HTMLElement {
       return this;
     }
 
+    if (el === '$$body') {
+      return document.body;
+    }
+
     if (el instanceof HTMLElement) {
       return el;
     }
@@ -352,11 +361,14 @@ export abstract class TinyElement extends HTMLElement {
    * @param selector The CSS selector.
    * @param element The parent to query.
    */
-  $(selector: string, element: string | TinyElement | HTMLElement = this) {
-    const el = this._element(element);
+  $<T extends HTMLElement>(
+    selector: string,
+    element: string | TinyElement | HTMLElement = this
+  ): T {
+    const el = this._element(element) as HTMLElement;
 
     if (!el) {
-      return this;
+      return <any>this;
     }
 
     if (el === this) {
@@ -369,7 +381,7 @@ export abstract class TinyElement extends HTMLElement {
       return el.$(selector);
     }
 
-    return el.querySelector(selector);
+    return el.querySelector(selector) as T;
   }
 
   /**
@@ -377,11 +389,14 @@ export abstract class TinyElement extends HTMLElement {
    * @param selector The CSS selector.
    * @param element The parent to query.
    */
-  $$(selector: string, element: string | TinyElement | HTMLElement = this) {
-    const el = this._element(element);
+  $$<T extends HTMLElement>(
+    selector: string,
+    element: string | TinyElement | HTMLElement = this
+  ): NodeListOf<T> {
+    const el = this._element(element) as HTMLElement;
 
     if (!el) {
-      return this;
+      return null;
     }
 
     if (el === this) {
@@ -406,7 +421,7 @@ export abstract class TinyElement extends HTMLElement {
     classes: string | Array<string>,
     element: string | TinyElement | HTMLElement = this
   ) {
-    const el = this._element(element);
+    const el = this._element(element) as HTMLElement;
 
     if (!el) {
       return this;
@@ -425,7 +440,7 @@ export abstract class TinyElement extends HTMLElement {
     classes: string | Array<string>,
     element: string | TinyElement | HTMLElement = this
   ) {
-    const el = this._element(element);
+    const el = this._element(element) as HTMLElement;
 
     if (!el) {
       return this;
@@ -440,7 +455,7 @@ export abstract class TinyElement extends HTMLElement {
    * @param element The element.
    */
   clearClasses(element: string | TinyElement | HTMLElement = this) {
-    const el = this._element(element);
+    const el = this._element(element) as HTMLElement;
 
     if (!el) {
       return this;
@@ -471,7 +486,7 @@ export abstract class TinyElement extends HTMLElement {
    * @param element The element.
    */
   getAttr(name: string, element: string | TinyElement | HTMLElement = this) {
-    const el = this._element(element);
+    const el = this._element(element) as HTMLElement;
 
     if (!el) {
       return this;
@@ -486,7 +501,7 @@ export abstract class TinyElement extends HTMLElement {
    * @param element The element.
    */
   setAttr(obj: KeyValue, element: string | TinyElement | HTMLElement = this) {
-    const el = this._element(element);
+    const el = this._element(element) as HTMLElement;
 
     if (!el) {
       return this;
@@ -507,7 +522,7 @@ export abstract class TinyElement extends HTMLElement {
     attrs: string | Array<string>,
     element: string | TinyElement | HTMLElement = this
   ) {
-    const el = this._element(element);
+    const el = this._element(element) as HTMLElement;
 
     if (!el) {
       return this;
@@ -551,7 +566,7 @@ export abstract class TinyElement extends HTMLElement {
    * @param {HTMLElement|String} element The element.
    */
   getStyle(name: string, element: string | TinyElement | HTMLElement = this) {
-    const el = this._element(element);
+    const el = this._element(element) as HTMLElement;
 
     if (!el) {
       return;
@@ -569,7 +584,7 @@ export abstract class TinyElement extends HTMLElement {
     styles: KeyValue,
     element: string | TinyElement | HTMLElement = this
   ) {
-    const el = this._element(element);
+    const el = this._element(element) as HTMLElement;
 
     if (!el) {
       return this;
@@ -588,17 +603,17 @@ export abstract class TinyElement extends HTMLElement {
   }
 
   /**
-   * Clears the passed styles.
+   * Clears the styles of an element.
    * @param element The element.
    */
   clearStyles(element: string | TinyElement | HTMLElement = this) {
-    const el = this._element(element);
+    const el = this._element(element) as HTMLElement;
 
     if (!el) {
       return this;
     }
 
-    delete el.style;
+    el.style.cssText = '';
     return this;
   }
 
@@ -611,7 +626,7 @@ export abstract class TinyElement extends HTMLElement {
     styles: string | Array<string>,
     element: string | TinyElement | HTMLElement = this
   ) {
-    const el = this._element(element);
+    const el = this._element(element) as HTMLElement;
 
     if (!el) {
       return this;
@@ -629,7 +644,7 @@ export abstract class TinyElement extends HTMLElement {
    * @param parent The parent element.
    */
   getChild(index: number, parent: string | TinyElement | HTMLElement = this) {
-    const el = this._element(parent);
+    const el = this._element(parent) as HTMLElement;
 
     if (!el) {
       return this;
@@ -653,7 +668,7 @@ export abstract class TinyElement extends HTMLElement {
     parent: string | TinyElement | HTMLElement = this,
     prepend: boolean = false
   ) {
-    const el = this._element(parent);
+    const el = this._element(parent) as HTMLElement;
 
     if (!el || !children) {
       return this;
@@ -671,7 +686,7 @@ export abstract class TinyElement extends HTMLElement {
    * @param element The element.
    */
   removeChildren(element: string | TinyElement | HTMLElement = this) {
-    const el = this._element(element);
+    const el = this._element(element) as HTMLElement;
 
     if (!el) {
       return this;
@@ -686,11 +701,31 @@ export abstract class TinyElement extends HTMLElement {
 
   /**
    * Updates html of the element.
+   * @param template The template.
+   * @param element The element.
+   */
+  appendTemplate(
+    template: HTMLTemplateElement,
+    element: string | TinyElement | HTMLElement = this
+  ) {
+    const el = this._element(element) as HTMLElement;
+
+    if (!el) {
+      return this;
+    }
+
+    this.addChildren(<HTMLElement>template.content.cloneNode(true));
+
+    return this;
+  }
+
+  /**
+   * Updates html of the element.
    * @param html The html.
    * @param element The element.
    */
   updateHtml(html: string, element: string | TinyElement | HTMLElement = this) {
-    const el = this._element(element);
+    const el = this._element(element) as HTMLElement;
 
     if (!el) {
       return this;
@@ -705,7 +740,7 @@ export abstract class TinyElement extends HTMLElement {
    * @param element The element.
    */
   show(element: string | TinyElement | HTMLElement = this) {
-    const el = this._element(element);
+    const el = this._element(element) as HTMLElement;
 
     if (!el) {
       return this;
@@ -720,7 +755,7 @@ export abstract class TinyElement extends HTMLElement {
    * @param element The element.
    */
   hide(element: string | TinyElement | HTMLElement = this) {
-    const el = this._element(element);
+    const el = this._element(element) as HTMLElement;
 
     if (!el) {
       return this;
@@ -741,7 +776,7 @@ export abstract class TinyElement extends HTMLElement {
     handler,
     element: string | TinyElement | HTMLElement | Window = this
   ) {
-    const el = this._element(element);
+    const el = this._element(element) as HTMLElement;
 
     if (!el) {
       return this;
@@ -774,7 +809,7 @@ export abstract class TinyElement extends HTMLElement {
     handler,
     element: string | TinyElement | HTMLElement | Window = this
   ) {
-    const el = this._element(element);
+    const el = this._element(element) as HTMLElement;
 
     if (!el) {
       return this;
