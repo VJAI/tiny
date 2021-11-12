@@ -74,8 +74,9 @@ export function query(selector: string, parent?: string): PropertyDecorator {
 /**
  * Decorator that helps to query and return DOM element(s) on accessing the applied property.
  * @param selector The CSS selector.
+ *  * @param parent The parent element selector.
  */
-export function queryAll(selector: string): PropertyDecorator {
+export function queryAll(selector: string, parent?: string): PropertyDecorator {
   return (target: object, property: string | symbol) => {
     const metadata = getMeta(target.constructor),
       { accessors } = metadata;
@@ -88,7 +89,7 @@ export function queryAll(selector: string): PropertyDecorator {
       );
     }
 
-    accessors.set(property, { selector, all: true });
+    accessors.set(property, { selector, parent, all: true });
     setMeta(target.constructor, metadata);
   };
 }

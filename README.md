@@ -15,17 +15,18 @@ A simple todo app.
 ```js
 import { TinyElement, element, query, handle, input } from 'tiny.element.js';
 
-@element('todo-app',
-`<div class="container">
+@element(
+  'todo-app',
+  `<div class="container">
   <form>
     <input name="todo" placeholder="New Todo" />
     <button type="submit">Add</button>
   </form>
   <div class="list">
   </div>
-</div>`)
+</div>`
+)
 class TodoApp extends TinyElement {
-
   @query('.list')
   todosContainer;
 
@@ -50,13 +51,14 @@ class TodoApp extends TinyElement {
   }
 }
 
-@element('todo-item',
-`<div>
+@element(
+  'todo-item',
+  `<div>
   <span class="text"></span>
   <button type="button" style="font-size:10px" class="delete">❌</button>
-</div>`)
+</div>`
+)
 class Todo extends TinyElement {
-
   @input(true)
   item;
 
@@ -119,36 +121,29 @@ Contains methods to perform DOM operations.
 **`onDisconnected()`** - Invoked after the element is dis-connected to DOM (life-cycle hook).<br><br>
 **`onChanges(changes)`** - Called initially and whenever there is a change in inputs (life-cycle hook).<br><br>
 
-
 ### `element(name, tpl, shadow = false)` decorator
 
 Decorator that helps to register a class as custom web element.
-
 
 ### `input(attribute = false, dataType = 'string')` decorator
 
 Decorator that marks the applied property as an input.
 
-
 ### `query(selector)` decorator
 
 Decorator that helps to query and return DOM element(s) on accessing the applied property.
-
 
 ### `queryAll(selector)` decorator
 
 Decorator that helps to query and return DOM element(s) on accessing the applied property.
 
-
 ### `handle(eventName, element = 'self', all = false)` decorator
 
 Decorator that helps to bind a DOM event with a function.
 
-
 ## License
 
 MIT
-
 
 ## Contact
 

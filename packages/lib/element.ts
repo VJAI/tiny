@@ -1,31 +1,83 @@
 import { ELEMENT_META_KEY, AttributeValueDataType } from './constants';
-import { isVoid } from './util';
+import { isVoid, readValue } from './util';
 import { ElementMetadata } from './element.metadata';
 
+/**
+ * Represents a key / value structure like object.
+ */
 export interface KeyValue {
   [key: string]: any;
 }
 
+/**
+ * Represents event names and handlers map.
+ */
 export interface EventMap {
   [key: string]: (evt: any) => void;
 }
 
+/**
+ * Element creation parameters.
+ */
 export interface TinyElementCreateOptions {
+  /**
+   * Element id.
+   */
   id?: string;
+
+  /**
+   * CSS class(es).
+   */
   cls?: string | Array<string>;
+
+  /**
+   * Properties.
+   */
   props?: KeyValue;
+
+  /**
+   * DOM attributes.
+   */
   attrs?: KeyValue;
+
+  /**
+   * Styles.
+   */
   styles?: KeyValue;
+
+  /**
+   * Events.
+   */
   events?: EventMap;
+
+  /**
+   * Parent element.
+   */
   parent?: string | TinyElement | HTMLElement;
+
+  /**
+   * Inner HTML.
+   */
   html?: string;
+
+  /**
+   * Children.
+   */
   children?: Array<{ name: string; options: TinyElementCreateOptions }>;
 }
 
+/**
+ * Type that represents the element changes map.
+ */
 export type ElementChanges = Map<string, { oldValue: any; newValue: any }>;
 
 /**
- * Represents the base class for all Tiny elements.
+ * Represents an UI element.
+ */
+export type UIElement = string | TinyElement | HTMLElement;
+
+/**
+ * Simple base class for all Tiny elements.
  * Simplifies developing components using native browser technologies.
  */
 export abstract class TinyElement extends HTMLElement {
@@ -46,13 +98,11 @@ export abstract class TinyElement extends HTMLElement {
 
   /**
    * The input properties changes dictionary.
-   * @type {Map}
    */
   private _changes = new Map<string, { oldValue: any; newValue: any }>();
 
   /**
    * The input props values.
-   * @type {Map}
    */
   private _props = new Map<string, any>();
 
@@ -96,7 +146,7 @@ export abstract class TinyElement extends HTMLElement {
   }
 
   /**
-   * Read accessors from metadata and re-define `getters` for applied props.
+   * Reads accessors from metadata and re-define `getters` for applied props.
    */
   private _applyAccessors() {
     [...this.metadata.accessors].forEach(
@@ -111,7 +161,7 @@ export abstract class TinyElement extends HTMLElement {
   }
 
   /**
-   * Read inputs from metadata and re-define `getters` and `setters` for applied props.
+   * Reads inputs from metadata and re-define `getters` and `setters` for applied props.
    */
   private _applyInputs() {
     [...this.metadata.inputs].forEach(({ property, attribute, dataType }) => {
@@ -169,7 +219,7 @@ export abstract class TinyElement extends HTMLElement {
   }
 
   /**
-   * Set event handlers scope to `this`.
+   * Sets event handlers scope to `this`.
    */
   private _setHandlersScope() {
     [...this.metadata.handlers].forEach(([, handlers]) =>
@@ -180,7 +230,7 @@ export abstract class TinyElement extends HTMLElement {
   }
 
   /**
-   * Read non-window event handlers from metadata and subscribe to events.
+   * Reads non-window event handlers from metadata and subscribe to events.
    */
   private _applyNonWindowHandlers() {
     [...this.metadata.handlers]
@@ -203,7 +253,7 @@ export abstract class TinyElement extends HTMLElement {
   }
 
   /**
-   * Read window event handlers from metadata and subscribe events.
+   * Reads window event handlers from metadata and subscribe events.
    */
   private _applyWindowHandlers() {
     [...this.metadata.handlers]
@@ -216,7 +266,7 @@ export abstract class TinyElement extends HTMLElement {
   }
 
   /**
-   * Push the changed property and it's value.
+   * Pushes the changed property and it's value.
    * @param prop The property name.
    * @param value The property value.
    */
@@ -248,9 +298,9 @@ export abstract class TinyElement extends HTMLElement {
 
   /**
    * Returns the passed element or based on selector.
-   * @param el
+   * @param el The element.
    */
-  private _element(el: string | Window | HTMLElement | TinyElement) {
+  private _element(el: UIElement | Window): UIElement | Window {
     if (el === 'window' || el === window) {
       return el;
     }
@@ -261,6 +311,10 @@ export abstract class TinyElement extends HTMLElement {
 
     if (el === '$$body') {
       return document.body;
+    }
+
+    if (typeof el === 'string' && el.startsWith('$$this.')) {
+      return <HTMLElement>readValue(this, el.substr('$$this.'.length));
     }
 
     if (el instanceof HTMLElement) {
@@ -359,12 +413,9 @@ export abstract class TinyElement extends HTMLElement {
   /**
    * Queries and returns the first element that matches the passed CSS selector.
    * @param selector The CSS selector.
-   * @param element The parent to query.
+   * @param [element] The parent to query.
    */
-  $<T extends HTMLElement>(
-    selector: string,
-    element: string | TinyElement | HTMLElement = this
-  ): T {
+  $<T extends HTMLElement>(selector: string, element: UIElement = this): T {
     const el = this._element(element) as HTMLElement;
 
     if (!el) {
@@ -387,11 +438,11 @@ export abstract class TinyElement extends HTMLElement {
   /**
    * Queries and returns all the elements that matches the passed CSS selector.
    * @param selector The CSS selector.
-   * @param element The parent to query.
+   * @param [element] The parent to query.
    */
   $$<T extends HTMLElement>(
     selector: string,
-    element: string | TinyElement | HTMLElement = this
+    element: UIElement = this
   ): NodeListOf<T> {
     const el = this._element(element) as HTMLElement;
 
@@ -413,14 +464,29 @@ export abstract class TinyElement extends HTMLElement {
   }
 
   /**
+   * Returns true if the element has the passed CSS class name.
+   * @param cls The CSS class.
+   * @param element The element.
+   */
+  hasClass(cls: string, element: UIElement = this): boolean {
+    const el = this._element(element) as HTMLElement;
+
+    if (!el) {
+      return false;
+    }
+
+    return el.classList.contains(cls);
+  }
+
+  /**
    * Adds single or multiple CSS classes.
    * @param classes The CSS classes.
-   * @param element The element.
+   * @param [element] The element.
    */
   addClass(
     classes: string | Array<string>,
-    element: string | TinyElement | HTMLElement = this
-  ) {
+    element: UIElement = this
+  ): TinyElement {
     const el = this._element(element) as HTMLElement;
 
     if (!el) {
@@ -434,12 +500,12 @@ export abstract class TinyElement extends HTMLElement {
   /**
    * Removes single or multiple CSS classes from the element.
    * @param classes Single or array of css class names.
-   * @param element The element.
+   * @param [element] The element.
    */
   removeClass(
     classes: string | Array<string>,
-    element: string | TinyElement | HTMLElement = this
-  ) {
+    element: UIElement = this
+  ): TinyElement {
     const el = this._element(element) as HTMLElement;
 
     if (!el) {
@@ -452,9 +518,9 @@ export abstract class TinyElement extends HTMLElement {
 
   /**
    * Clears all CSS classes.
-   * @param element The element.
+   * @param [element] The element.
    */
-  clearClasses(element: string | TinyElement | HTMLElement = this) {
+  clearClasses(element: UIElement = this): TinyElement {
     const el = this._element(element) as HTMLElement;
 
     if (!el) {
@@ -466,16 +532,45 @@ export abstract class TinyElement extends HTMLElement {
   }
 
   /**
-   * Toggles source css classes with the target css classes.
-   * @param sourceCls Source css class(es).
-   * @param targetCls Target css class(es).
-   * @param element The element.
+   * Toggles CSS classes.
+   * @param cls CSS classes.
+   * @param [element] The element.
+   * @param [state] Passing the boolean flag decides to add or remove classes.
    */
   toggleClass(
+    cls: string | Array<string>,
+    element: UIElement = this,
+    state?: boolean
+  ): TinyElement {
+    const el = this._element(element) as HTMLElement;
+
+    if (!el) {
+      return this;
+    }
+
+    if (isVoid(state)) {
+      const classes = typeof cls === 'string' ? [cls] : cls;
+      classes.forEach(c =>
+        this.hasClass(c, el) ? this.removeClass(c, el) : this.addClass(c, el)
+      );
+      return this;
+    }
+
+    state ? this.addClass(cls, el) : this.removeClass(cls, el);
+    return this;
+  }
+
+  /**
+   * Replaces source css classes with the target css classes.
+   * @param sourceCls Source css class(es).
+   * @param targetCls Target css class(es).
+   * @param [element] The element.
+   */
+  replaceClass(
     sourceCls: string | Array<string>,
     targetCls: string | Array<string>,
-    element: string | TinyElement | HTMLElement = this
-  ) {
+    element: UIElement = this
+  ): TinyElement {
     this.removeClass(sourceCls, element).addClass(targetCls, element);
     return this;
   }
@@ -483,13 +578,13 @@ export abstract class TinyElement extends HTMLElement {
   /**
    * Returns the attribute value of the element.
    * @param name The attribute name.
-   * @param element The element.
+   * @param [element] The element.
    */
-  getAttr(name: string, element: string | TinyElement | HTMLElement = this) {
+  getAttr(name: string, element: UIElement = this): string {
     const el = this._element(element) as HTMLElement;
 
     if (!el) {
-      return this;
+      return '';
     }
 
     return el.getAttribute(name);
@@ -498,9 +593,9 @@ export abstract class TinyElement extends HTMLElement {
   /**
    * Sets attributes for element from the passed object.
    * @param obj The attributes map.
-   * @param element The element.
+   * @param [element] The element.
    */
-  setAttr(obj: KeyValue, element: string | TinyElement | HTMLElement = this) {
+  setAttr(obj: KeyValue, element: UIElement = this): TinyElement {
     const el = this._element(element) as HTMLElement;
 
     if (!el) {
@@ -508,7 +603,7 @@ export abstract class TinyElement extends HTMLElement {
     }
 
     Object.entries(obj).forEach(([key, value]) =>
-      value === null ? this.removeAttr(key) : el.setAttribute(key, value)
+      isVoid(value) ? this.removeAttr(key) : el.setAttribute(key, value)
     );
     return this;
   }
@@ -516,12 +611,12 @@ export abstract class TinyElement extends HTMLElement {
   /**
    * Removes the passed attributes from the element.
    * @param attrs The attribute(s).
-   * @param element The element.
+   * @param [element] The element.
    */
   removeAttr(
     attrs: string | Array<string>,
-    element: string | TinyElement | HTMLElement = this
-  ) {
+    element: UIElement = this
+  ): TinyElement {
     const el = this._element(element) as HTMLElement;
 
     if (!el) {
@@ -538,18 +633,18 @@ export abstract class TinyElement extends HTMLElement {
   /**
    * Returns the value of the data attribute.
    * @param name The data attribute name.
-   * @param el The element.
+   * @param [el] The element.
    */
-  getData(name: string, el: string | TinyElement | HTMLElement = this) {
+  getData(name: string, el: UIElement = this): string {
     return this.getAttr(`data-${name}`, el);
   }
 
   /**
    * Sets object of data attributes.
    * @param obj The data dictionary.
-   * @param el The element.
+   * @param [el] The element.
    */
-  setData(obj: KeyValue, el: string | TinyElement | HTMLElement = this) {
+  setData(obj: KeyValue, el: UIElement = this): TinyElement {
     this.setAttr(
       Object.entries(obj).reduce((acc, [key, value]) => {
         acc[`data-${key}`] = value;
@@ -562,28 +657,40 @@ export abstract class TinyElement extends HTMLElement {
 
   /**
    * Returns the passed style's value.
-   * @param {String} name The style name.
-   * @param {HTMLElement|String} element The element.
+   * @param name The style name.
+   * @param [element] The element.
    */
-  getStyle(name: string, element: string | TinyElement | HTMLElement = this) {
+  getStyle(name: string, element: UIElement = this): string {
     const el = this._element(element) as HTMLElement;
 
     if (!el) {
-      return;
+      return '';
     }
 
     return el.style[name];
   }
 
   /**
+   * Returns true if the element has the passed style.
+   * @param style Style name.
+   * @param [element] The element.
+   */
+  hasStyle(style: string, element: UIElement = this): boolean {
+    const el = this._element(element) as HTMLElement;
+
+    if (!el) {
+      return false;
+    }
+
+    return el.getAttribute('style').indexOf(`${style}:`) != -1;
+  }
+
+  /**
    * Add passed styles.
    * @param styles The styles object.
-   * @param element The element.
+   * @param [element] The element.
    */
-  addStyle(
-    styles: KeyValue,
-    element: string | TinyElement | HTMLElement = this
-  ) {
+  addStyle(styles: KeyValue, element: UIElement = this): TinyElement {
     const el = this._element(element) as HTMLElement;
 
     if (!el) {
@@ -604,9 +711,9 @@ export abstract class TinyElement extends HTMLElement {
 
   /**
    * Clears the styles of an element.
-   * @param element The element.
+   * @param [element] The element.
    */
-  clearStyles(element: string | TinyElement | HTMLElement = this) {
+  clearStyles(element: UIElement = this): TinyElement {
     const el = this._element(element) as HTMLElement;
 
     if (!el) {
@@ -620,12 +727,12 @@ export abstract class TinyElement extends HTMLElement {
   /**
    * Removes the passed style(s).
    * @param styles Style(s).
-   * @param element The element.
+   * @param [element] The element.
    */
   removeStyles(
     styles: string | Array<string>,
-    element: string | TinyElement | HTMLElement = this
-  ) {
+    element: UIElement = this
+  ): TinyElement {
     const el = this._element(element) as HTMLElement;
 
     if (!el) {
@@ -641,23 +748,23 @@ export abstract class TinyElement extends HTMLElement {
   /**
    * Returns the child from the passed index.
    * @param index The index.
-   * @param parent The parent element.
+   * @param [parent] The parent element.
    */
-  getChild(index: number, parent: string | TinyElement | HTMLElement = this) {
+  getChild(index: number, parent: UIElement = this): HTMLElement {
     const el = this._element(parent) as HTMLElement;
 
     if (!el) {
       return this;
     }
 
-    return el.children[index];
+    return <HTMLElement>el.children[index];
   }
 
   /**
    * Inserts the passed elements as children.
    * @param children The elements to be added.
-   * @param parent The element.
-   * @param prepend True to prepend the element.
+   * @param [parent] The element.
+   * @param [prepend] True to prepend the element.
    */
   addChildren(
     children:
@@ -665,9 +772,9 @@ export abstract class TinyElement extends HTMLElement {
       | Array<HTMLElement>
       | HTMLCollection
       | Array<DocumentFragment>,
-    parent: string | TinyElement | HTMLElement = this,
+    parent: UIElement = this,
     prepend: boolean = false
-  ) {
+  ): TinyElement {
     const el = this._element(parent) as HTMLElement;
 
     if (!el || !children) {
@@ -675,17 +782,24 @@ export abstract class TinyElement extends HTMLElement {
     }
 
     [...(children instanceof HTMLElement ? [children] : children)].forEach(
-      child => (prepend ? el.prepend(child) : el.appendChild(child))
+      child => {
+        const e =
+          child instanceof HTMLTemplateElement
+            ? child.content.cloneNode(true)
+            : child;
+        e && (prepend ? el.prepend(e) : el.appendChild(e));
+      }
     );
+
     this._applyNonWindowHandlers();
     return this;
   }
 
   /**
    * Removes all the children.
-   * @param element The element.
+   * @param [element] The element.
    */
-  removeChildren(element: string | TinyElement | HTMLElement = this) {
+  removeChildren(element: UIElement = this): TinyElement {
     const el = this._element(element) as HTMLElement;
 
     if (!el) {
@@ -701,45 +815,25 @@ export abstract class TinyElement extends HTMLElement {
 
   /**
    * Updates html of the element.
-   * @param template The template.
-   * @param element The element.
-   */
-  appendTemplate(
-    template: HTMLTemplateElement,
-    element: string | TinyElement | HTMLElement = this
-  ) {
-    const el = this._element(element) as HTMLElement;
-
-    if (!el) {
-      return this;
-    }
-
-    this.addChildren(<HTMLElement>template.content.cloneNode(true));
-
-    return this;
-  }
-
-  /**
-   * Updates html of the element.
    * @param html The html.
-   * @param element The element.
+   * @param [element] The element.
    */
-  updateHtml(html: string, element: string | TinyElement | HTMLElement = this) {
+  updateHtml(html: string, element: UIElement = this): TinyElement {
     const el = this._element(element) as HTMLElement;
 
     if (!el) {
       return this;
     }
 
-    el.innerHTML = html;
+    el.innerHTML = !isVoid(html) ? html : '';
     return this;
   }
 
   /**
    * Shows the element.
-   * @param element The element.
+   * @param [element] The element.
    */
-  show(element: string | TinyElement | HTMLElement = this) {
+  show(element: UIElement = this): TinyElement {
     const el = this._element(element) as HTMLElement;
 
     if (!el) {
@@ -752,9 +846,9 @@ export abstract class TinyElement extends HTMLElement {
 
   /**
    * Hides the element.
-   * @param element The element.
+   * @param [element] The element.
    */
-  hide(element: string | TinyElement | HTMLElement = this) {
+  hide(element: UIElement = this): TinyElement {
     const el = this._element(element) as HTMLElement;
 
     if (!el) {
@@ -766,16 +860,33 @@ export abstract class TinyElement extends HTMLElement {
   }
 
   /**
+   * Enables / disables component based on passed flag.
+   * @param [element] The element.
+   * @param [enable] Passing true will enable the control.
+   */
+  enable(element: UIElement = this, enable = true): TinyElement {
+    const el = this._element(element) as HTMLElement;
+
+    if (!el) {
+      return this;
+    }
+
+    if (enable) {
+      this.removeAttr('disabled', el);
+    } else {
+      this.setAttr({ disabled: true }, el);
+    }
+
+    return this;
+  }
+
+  /**
    * Subscribes to the event.
    * @param eventName Event name.
    * @param handler Event handler.
-   * @param element The element.
+   * @param [element] The element.
    */
-  on(
-    eventName,
-    handler,
-    element: string | TinyElement | HTMLElement | Window = this
-  ) {
+  on(eventName, handler, element: UIElement | Window = this): TinyElement {
     const el = this._element(element) as HTMLElement;
 
     if (!el) {
@@ -802,13 +913,9 @@ export abstract class TinyElement extends HTMLElement {
    * Un-subscribes from the event.
    * @param eventName Event name.
    * @param handler Event handler.
-   * @param element The element.
+   * @param [element] The element.
    */
-  off(
-    eventName,
-    handler,
-    element: string | TinyElement | HTMLElement | Window = this
-  ) {
+  off(eventName, handler, element: UIElement | Window = this): TinyElement {
     const el = this._element(element) as HTMLElement;
 
     if (!el) {

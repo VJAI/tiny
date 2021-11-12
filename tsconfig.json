@@ -25,16 +25,8 @@
     "target": "es2020",
     "incremental": true,
     "newLine": "LF",
-    "lib": [
-      "es2018",
-      "dom",
-      "dom.iterable"
-    ]
+    "lib": ["es2018", "dom", "dom.iterable"]
   },
-  "files": [
-    "dev.ts"
-  ],
-  "include": [
-    "packages/**/*.ts"
-  ]
+  "files": ["dev.ts"],
+  "include": ["packages/**/*.ts"]
 }
