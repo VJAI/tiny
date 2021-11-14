@@ -5,7 +5,7 @@ A tiny library (~20kb minified) simplifies building web components using a base 
 ## Installation
 
 ```shell
-npm i tiny.element.js --save
+npm i @tiny/core --save
 ```
 
 ## Example

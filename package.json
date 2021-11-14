@@ -1,6 +1,6 @@
 {
-  "name": "tiny.element.js",
-  "version": "2.0.2",
+  "name": "@tiny/core",
+  "version": "2.0.3",
   "description": "A tiny library simplifies building web components using decorators",
   "main": "dist/packages/lib/index.js",
   "module": "dist/esm/packages/lib/index.js",
