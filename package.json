@@ -1,6 +1,6 @@
 {
   "name": "@tinyweb/core",
-  "version": "2.0.4",
+  "version": "2.0.5",
   "description": "A tiny library simplifies building web components using decorators",
   "main": "dist/src/index.js",
   "module": "dist/esm/src/index.js",

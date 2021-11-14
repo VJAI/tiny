@@ -4,7 +4,9 @@ npm-debug.log*
 .idea/
 .DS_Store
 coverage
-/packages
+/src
+.github
+.husky
 .editorconfig
 .eslintignore
 .eslintrc.js
@@ -14,3 +16,4 @@ dev.ts
 index.html
 package-lock.json
 webpack.config.js
+tsconfig.*
