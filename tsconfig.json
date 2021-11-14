@@ -28,5 +28,5 @@
     "lib": ["es2018", "dom", "dom.iterable"]
   },
   "files": ["dev.ts"],
-  "include": ["packages/**/*.ts"]
+  "include": ["src/**/*.ts"]
 }

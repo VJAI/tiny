@@ -1,4 +1,4 @@
-import { TinyElement, element, query, handle, input } from './packages/lib';
+import { TinyElement, element, query, handle, input } from './src';
 
 @element(
   'todo-app',
