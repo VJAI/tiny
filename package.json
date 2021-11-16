@@ -1,6 +1,6 @@
 {
   "name": "@tinyweb/core",
-  "version": "2.0.5",
+  "version": "2.0.6",
   "description": "A tiny library simplifies building web components using decorators",
   "main": "dist/src/index.js",
   "module": "dist/esm/src/index.js",
@@ -18,7 +18,6 @@
     "build:cjs": "tsc --build tsconfig.json",
     "build:esm": "tsc --build tsconfig.esm.json",
     "build:es5": "tsc --build tsconfig.es5.json",
-    "build-storybook": "build-storybook",
     "example": "webpack-dev-server --config webpack.config.js",
     "prepare": "husky install"
   },
