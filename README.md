@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://github.com/VJAI/tiny/blob/main/tiny.png" />
+  <img src="https://github.com/VJAI/tiny/blob/main/tiny.png" style="width: 200px" />
 </p>
 
 # ƚιɳყ
