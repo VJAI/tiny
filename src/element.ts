@@ -17,6 +17,14 @@ export interface EventMap {
 }
 
 /**
+ * Represents a DOM event handler.
+ */
+export type EventHandler<K extends keyof HTMLElementEventMap> = (
+  this: HTMLElement,
+  ev: HTMLElementEventMap[K]
+) => any;
+
+/**
  * Element creation parameters.
  */
 export interface TinyElementCreateOptions {
@@ -375,6 +383,37 @@ export abstract class TinyElement extends HTMLElement {
    * Should be overwritten by sub-components to update the decorators/DOM.
    */
   protected onChanges(changes: ElementChanges) {}
+
+  /**
+   * Renders the element.
+   */
+  protected render() {
+    if (!this._metadata.tpl) {
+      return;
+    }
+
+    const template = document.createElement('template');
+    template.innerHTML = this._metadata.tpl;
+
+    const { shadow } = this._metadata;
+
+    if (shadow) {
+      this._shadowRoot = this.attachShadow({ mode: 'closed' });
+      this._shadowRoot.appendChild(template.content.cloneNode(true));
+    } else {
+      this.appendChild(template.content.cloneNode(true));
+    }
+  }
+
+  /**
+   * Refresh the UI.
+   */
+  protected refresh() {
+    this.onChanges(this.changes);
+    this.changes.clear();
+    this._updateTimer && window.clearTimeout(this._updateTimer);
+    this._updateTimer = null;
+  }
 
   /**
    * Create new element and returns it.
@@ -886,7 +925,11 @@ export abstract class TinyElement extends HTMLElement {
    * @param handler Event handler.
    * @param [element] The element.
    */
-  on(eventName, handler, element: UIElement | Window = this): TinyElement {
+  on<K extends keyof HTMLElementEventMap>(
+    eventName,
+    handler: EventHandler<K>,
+    element: UIElement | Window = this
+  ): TinyElement {
     const el = this._element(element) as HTMLElement;
 
     if (!el) {
@@ -915,7 +958,11 @@ export abstract class TinyElement extends HTMLElement {
    * @param handler Event handler.
    * @param [element] The element.
    */
-  off(eventName, handler, element: UIElement | Window = this): TinyElement {
+  off<K extends keyof HTMLElementEventMap>(
+    eventName,
+    handler: EventHandler<K>,
+    element: UIElement | Window = this
+  ): TinyElement {
     const el = this._element(element) as HTMLElement;
 
     if (!el) {
@@ -933,36 +980,5 @@ export abstract class TinyElement extends HTMLElement {
     elEventHandlers.get(eventName).delete(handler);
 
     return this;
-  }
-
-  /**
-   * Renders the element.
-   */
-  render() {
-    if (!this._metadata.tpl) {
-      return;
-    }
-
-    const template = document.createElement('template');
-    template.innerHTML = this._metadata.tpl;
-
-    const { shadow } = this._metadata;
-
-    if (shadow) {
-      this._shadowRoot = this.attachShadow({ mode: 'closed' });
-      this._shadowRoot.appendChild(template.content.cloneNode(true));
-    } else {
-      this.appendChild(template.content.cloneNode(true));
-    }
-  }
-
-  /**
-   * Refresh the UI.
-   */
-  refresh() {
-    this.onChanges(this.changes);
-    this.changes.clear();
-    this._updateTimer && window.clearTimeout(this._updateTimer);
-    this._updateTimer = null;
   }
 }

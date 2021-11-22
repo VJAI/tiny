@@ -89,57 +89,193 @@ document.addEventListener('DOMContentLoaded', () => {
 
 ## API
 
+### Decorators
+
+#### `element(name: string, tpl: string, shadow: boolean = false)` decorator
+Decorator that helps to register a class as custom web element. <br><br>
+
+#### `input(attribute = false, dataType = AttributeValueDataType.STRING)` decorator
+Decorator that marks the applied property as an input.
+The supported values of `AttributeValueDataType` are `STRING`, `NUMBER` and `BOOLEAN`.<br><br>
+
+#### `query(selector: string, parent?: string)` decorator
+Decorator that helps to query and return DOM element(s) on accessing the applied property. <br><br>
+
+#### `queryAll(selector: string, parent?: string)` decorator
+Decorator that helps to query and return DOM element(s) on accessing the applied property. <br><br>
+
+#### `handle(eventName: string, element: string = 'self', all = false)` decorator
+Decorator that helps to bind a DOM event with a function.
+The default value of element is "self" and you can pass any valid child element selector to it. <br><br>
+
 ### `TinyElement` (Base Class)
 
 Contains methods to perform DOM operations.
 
-**`create(name, options)`** - Create new element and returns it. <br><br>
-**`$(selector, el = this)`** - Queries and returns the element that matches the passed CSS selector. <br><br>
-**`$$(selector, el = this)`** - Queries and returns the elements that matches the passed CSS selector. <br><br>
-**`addClass(classes, el = this)`** - Adds single or multiple classes. <br><br>
-**`removeClass(classes, el = this)`** - Removes single or multiple classes. <br><br>
-**`clearClasses(el = this)`** - Clear all classes. <br><br>
-**`toggleClass(sourceCls, targetCls, el = this)`** - Toggles source css classes with the target. <br><br>
-**`getAttr(name, el = this)`** - Returns the attribute value of the element. <br><br>
-**`setAttr(obj, el = this)`** - Sets attributes for element from the passed object. <br><br>
-**`removeAttr(attrs, el = this)`** - Removes the passed attributes from the element. <br><br>
-**`getData(name, el = this)`** - Returns the value of the data attribute. <br><br>
-**`setData(obj, el = this)`** - Sets object of data attributes. <br><br>
-**`getStyle(name, el = this)`** - Returns the passed style's value. <br><br>
-**`addStyle(styles, el = this)`** - Add passed styles. <br><br>
-**`clearStyles(el = this)`** - Clears the passed styles. <br><br>
-**`removeStyles(styles, el = this)`** - Removes the passed style(s). <br><br>
-**`getChild(index, parent = this)`** - Returns the child from the passed index. <br><br>
-**`addChildren(children, parent = this)`** - Inserts the passed elements as children. <br><br>
-**`removeChildren(el = this)`** - Removes all the children. <br><br>
-**`updateHtml(html, el = this)`** - Updates html of the element. <br><br>
-**`show(el = this)`** - Shows the element. <br><br>
-**`hide(el = this)`** - Hides the element. <br><br>
-**`on(eventName, handler, el = this)`** - Subscribes to the event. <br><br>
-**`off(eventName, handler, el = this)`** - Un-subscribes from the event. <br><br>
-**`onConnected()`** - Invoked after the element is connected to DOM (life-cycle hook).<br><br>
-**`onDisconnected()`** - Invoked after the element is dis-connected to DOM (life-cycle hook).<br><br>
-**`onChanges(changes)`** - Called initially and whenever there is a change in inputs (life-cycle hook).<br><br>
+#### `create<T extends HTMLElement>(name: string, options: TinyElementCreateOptions): T`
+Create new element and returns it. 
+The `TinyElementCreateOptions` interface looks like below,
 
-### `element(name, tpl, shadow = false)` decorator
+```ts
+interface TinyElementCreateOptions {
+  /**
+   * Element id.
+   */
+  id?: string;
 
-Decorator that helps to register a class as custom web element.
+  /**
+   * CSS class(es).
+   */
+  cls?: string | Array<string>;
 
-### `input(attribute = false, dataType = 'string')` decorator
+  /**
+   * Properties.
+   */
+  props?: KeyValue;
 
-Decorator that marks the applied property as an input.
+  /**
+   * DOM attributes.
+   */
+  attrs?: KeyValue;
 
-### `query(selector)` decorator
+  /**
+   * Styles.
+   */
+  styles?: KeyValue;
 
-Decorator that helps to query and return DOM element(s) on accessing the applied property.
+  /**
+   * Events.
+   */
+  events?: EventMap;
 
-### `queryAll(selector)` decorator
+  /**
+   * Parent element.
+   */
+  parent?: string | TinyElement | HTMLElement;
 
-Decorator that helps to query and return DOM element(s) on accessing the applied property.
+  /**
+   * Inner HTML.
+   */
+  html?: string;
 
-### `handle(eventName, element = 'self', all = false)` decorator
+  /**
+   * Children.
+   */
+  children?: Array<{ name: string; options: TinyElementCreateOptions }>;
+}
+```
+<br><br>
 
-Decorator that helps to bind a DOM event with a function.
+#### `$<T extends HTMLElement>(selector: string, el: UIElement = this): T`
+Queries and returns the element that matches the passed CSS selector. 
+`UIElement` is a composite type and it can be `string`, `TinyElement` or `HTMLElement`. <br><br>
+
+#### `$$<T extends HTMLElement>(selector: string, el: UIElement = this): NodeListOf<T>`
+Queries and returns the elements that matches the passed CSS selector. <br><br>
+
+#### `hasClass(cls: string, element: UIElement = this): boolean`
+Returns `true` if the element has the passed CSS class name. <br><br>
+
+#### `addClass(classes: string | Array<string>, el: UIElement = this): TinyElement`
+Adds single or multiple classes. <br><br>
+
+#### `removeClass(classes: string | Array<string>, el: UIElement = this): TinyElement`
+Removes single or multiple classes. <br><br>
+
+#### `clearClasses(el: UIElement = this): TinyElement`
+Clear all classes. <br><br>
+
+#### `toggleClass(cls: string | Array<string>, el: UIElement = this, state?: boolean): TinyElement`
+Toggles source css classes with the target. <br><br>
+
+#### `replaceClass(sourceCls: string | Array<string>, targetCls: string | Array<string>, element: UIElement = this): TinyElement`
+Replaces source css classes with the target css classes. <br><br>
+
+#### `getAttr(name: string, el: UIElement = this): string`
+Returns the attribute value of the element. <br><br>
+
+#### `setAttr(obj: KeyValue, el: UIElement = this): TinyElement`
+Sets attributes for element from the passed object. 
+The `KeyValue` interface refers an object structure and it looks as below,
+
+```ts
+interface KeyValue {
+  [key: string]: any;
+}
+```
+<br><br>
+
+#### `removeAttr(attrs: string | Array<string>, el: UIElement = this): TinyElement`
+Removes the passed attributes from the element. <br><br>
+
+#### `getData(name: string, el: UIElement = this): string`
+Returns the value of the data attribute. <br><br>
+
+#### `setData(obj: KeyValue, el: UIElement = this): string`
+Sets object of data attributes. <br><br>
+
+#### `getStyle(name: string, el: UIElement = this): string`
+Returns the passed style's value. <br><br>
+
+#### `hasStyle(style: string, element: UIElement = this): boolean`
+Returns `true` if the element has the passed style. <br><br>
+
+#### `addStyle(styles: object, el: UIElement = this): TinyElement`
+Add passed styles. <br><br>
+
+#### `clearStyles(el: UIElement = this): TinyElement`
+Clears the passed styles. <br><br>
+
+#### `removeStyles(styles: string | Array<string>, el: UIElement = this): TinyElement`
+Removes the passed style(s). <br><br>
+
+#### `getChild(index: number, parent = this): HTMLElement`
+Returns the child from the passed index. <br><br>
+
+#### `addChildren(children: HTMLElement | Array<HTMLElement> | HTMLCollection | Array<DocumentFragment>, parent = this): TinyElement`
+Inserts the passed elements as children. <br><br>
+
+#### `removeChildren(el: UIElement = this): TinyElement`
+Removes all the children. <br><br>
+
+#### `updateHtml(html: string, el: UIElement = this): TinyElement`
+Updates html of the element. <br><br>
+
+#### `show(el: UIElement = this): TinyElement`
+Shows the element. <br><br>
+
+#### `hide(el: UIElement = this): TinyElement`
+Hides the element. <br><br>
+
+#### `enable(element: UIElement = this, enable = true): TinyElement`
+Enables / disables component based on passed flag. <br><br>
+
+#### `on<K extends keyof HTMLElementEventMap>(eventName: string, handler: EventHandler<K>, el: UIElement = this): TinyElement`
+Subscribes to the event. 
+The `EventHandler` type refers a DOM event handler and it looks as below,
+
+```ts
+type EventHandler<K extends keyof HTMLElementEventMap> = (this: HTMLElement, ev: HTMLElementEventMap[K]) => any;
+```
+<br><br>
+
+#### `off<K extends keyof HTMLElementEventMap>(eventName: string, handler: EventHandler<K>, el: UIElement = this): TinyElement`
+Un-subscribes from the event. <br><br>
+
+#### `onConnected()`
+Invoked after the element is connected to DOM (life-cycle hook).<br><br>
+
+#### `onDisconnected()`
+Invoked after the element is dis-connected to DOM (life-cycle hook).<br><br>
+
+#### `onChanges(changes: ElementChanges)`
+Called initially and whenever there is a change in inputs (life-cycle hook).
+The `ElementChanges` type looks as below,
+
+```ts
+type ElementChanges = Map<string, { oldValue: any; newValue: any }>;
+```
+<br><br>
 
 ## License
 
