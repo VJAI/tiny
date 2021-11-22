@@ -164,7 +164,6 @@ interface TinyElementCreateOptions {
   children?: Array<{ name: string; options: TinyElementCreateOptions }>;
 }
 ```
-<br><br>
 
 #### `$<T extends HTMLElement>(selector: string, el: UIElement = this): T`
 Queries and returns the element that matches the passed CSS selector. 
@@ -203,7 +202,6 @@ interface KeyValue {
   [key: string]: any;
 }
 ```
-<br><br>
 
 #### `removeAttr(attrs: string | Array<string>, el: UIElement = this): TinyElement`
 Removes the passed attributes from the element. <br><br>
@@ -257,7 +255,6 @@ The `EventHandler` type refers a DOM event handler and it looks as below,
 ```ts
 type EventHandler<K extends keyof HTMLElementEventMap> = (this: HTMLElement, ev: HTMLElementEventMap[K]) => any;
 ```
-<br><br>
 
 #### `off<K extends keyof HTMLElementEventMap>(eventName: string, handler: EventHandler<K>, el: UIElement = this): TinyElement`
 Un-subscribes from the event. <br><br>
@@ -275,7 +272,6 @@ The `ElementChanges` type looks as below,
 ```ts
 type ElementChanges = Map<string, { oldValue: any; newValue: any }>;
 ```
-<br><br>
 
 ## License
 
