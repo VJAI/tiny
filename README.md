@@ -13,29 +13,31 @@ npm i @tinyweb/core --save
 A simple todo app.
 
 ```js
-import { TinyElement, element, query, handle, input } from 'tiny.element.js';
+import { TinyElement, ElementChanges, element, query, handle, input } from '@tinyweb/core';
 
 @element(
   'todo-app',
   `<div class="container">
-  <form>
-    <input name="todo" placeholder="New Todo" />
-    <button type="submit">Add</button>
-  </form>
-  <div class="list">
-  </div>
-</div>`
+    <form>
+      <input name="todo" placeholder="New Todo" />
+      <button type="submit">Add</button>
+    </form>
+    <div class="list">
+    </div>
+  </div>`
 )
 class TodoApp extends TinyElement {
+  
   @query('.list')
-  todosContainer;
+  todosContainer: HTMLDivElement;
 
   @query('input')
-  input;
+  input: HTMLInputElement;
 
   @handle('submit', 'form')
-  onSubmit(evt) {
+  onSubmit(evt: Event) {
     evt.preventDefault();
+    
     if (!this.input.value) {
       return;
     }
@@ -54,28 +56,29 @@ class TodoApp extends TinyElement {
 @element(
   'todo-item',
   `<div>
-  <span class="text"></span>
-  <button type="button" style="font-size:10px" class="delete">❌</button>
-</div>`
+    <span class="text"></span>
+    <button type="button" style="font-size:10px" class="delete">❌</button>
+  </div>`
 )
 class Todo extends TinyElement {
+  
   @input(true)
-  item;
+  item: string;
 
   @query('.text')
-  spanEl;
+  spanEl: HTMLSpanElement;
 
   @query('.delete')
-  deleteEl;
+  deleteEl: HTMLButtonElement;
 
-  onChanges(changes) {
+  onChanges(changes: ElementChanges) {
     if (changes.has('item')) {
       this.updateHtml(this.item, this.spanEl);
     }
   }
 
   @handle('click', '.delete')
-  onDelete(evt) {
+  onDelete(evt: Event) {
     evt.preventDefault();
     this.remove();
   }
