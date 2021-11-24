@@ -157,7 +157,7 @@ export abstract class TinyElement extends HTMLElement {
    * Reads accessors from metadata and re-define `getters` for applied props.
    */
   private _applyAccessors() {
-    [...this.metadata.accessors].forEach(
+    [...this._metadata.accessors].forEach(
       ([prop, { selector, parent, all }]) => {
         Object.defineProperty(this, prop, {
           get() {
@@ -172,7 +172,7 @@ export abstract class TinyElement extends HTMLElement {
    * Reads inputs from metadata and re-define `getters` and `setters` for applied props.
    */
   private _applyInputs() {
-    [...this.metadata.inputs].forEach(({ property, attribute, dataType }) => {
+    [...this._metadata.inputs].forEach(({ property, attribute, dataType }) => {
       let value;
 
       if (attribute) {
@@ -230,7 +230,7 @@ export abstract class TinyElement extends HTMLElement {
    * Sets event handlers scope to `this`.
    */
   private _setHandlersScope() {
-    [...this.metadata.handlers].forEach(([, handlers]) =>
+    [...this._metadata.handlers].forEach(([, handlers]) =>
       [...handlers].forEach(
         handler => (this[handler.handler] = this[handler.handler].bind(this))
       )
@@ -241,7 +241,7 @@ export abstract class TinyElement extends HTMLElement {
    * Reads non-window event handlers from metadata and subscribe to events.
    */
   private _applyNonWindowHandlers() {
-    [...this.metadata.handlers]
+    [...this._metadata.handlers]
       .filter(([element]) => element !== 'window')
       .forEach(([element, handlers]) => {
         [...handlers].forEach(({ eventName, all, handler }) => {
@@ -264,7 +264,7 @@ export abstract class TinyElement extends HTMLElement {
    * Reads window event handlers from metadata and subscribe events.
    */
   private _applyWindowHandlers() {
-    [...this.metadata.handlers]
+    [...this._metadata.handlers]
       .filter(([element]) => element === 'window')
       .forEach(([, handlers]) =>
         handlers.forEach(({ eventName, handler }) =>
@@ -358,7 +358,7 @@ export abstract class TinyElement extends HTMLElement {
    * Life-cycle handler invoked whenever the element is disconnected from DOM.
    */
   protected disconnectedCallback() {
-    [...this.metadata.handlers]
+    [...this._metadata.handlers]
       .filter(([element]) => element === 'window')
       .forEach(([, handlers]) =>
         handlers.forEach(({ eventName, handler }) =>
@@ -409,8 +409,8 @@ export abstract class TinyElement extends HTMLElement {
    * Refresh the UI.
    */
   protected refresh() {
-    this.onChanges(this.changes);
-    this.changes.clear();
+    this.onChanges(this._changes);
+    this._changes.clear();
     this._updateTimer && window.clearTimeout(this._updateTimer);
     this._updateTimer = null;
   }
