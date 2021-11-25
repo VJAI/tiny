@@ -175,6 +175,9 @@ export abstract class TinyElement extends HTMLElement {
     [...this._metadata.inputs].forEach(({ property, attribute, dataType }) => {
       let value;
 
+      // If attribute flag is passed as `true` then read the initial value from the DOM
+      // and parse it based on the data type before pushing it to the `_changes`
+      // and storing it in `_props`.
       if (attribute) {
         let attrValue: any = this.getAttr(property);
 
@@ -202,6 +205,8 @@ export abstract class TinyElement extends HTMLElement {
 
       this._pushChange(property, value);
       this._props.set(property, value);
+
+      // Re-define the getters and setters.
       const target = this;
       Object.defineProperty(this, property, {
         get() {
@@ -274,7 +279,8 @@ export abstract class TinyElement extends HTMLElement {
   }
 
   /**
-   * Pushes the changed property and it's value.
+   * Pushes the changed property and it's value to the changes map
+   * only if there is an actual change.
    * @param prop The property name.
    * @param value The property value.
    */

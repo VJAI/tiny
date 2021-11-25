@@ -106,10 +106,10 @@ Decorator that marks the applied property as an input.
 The supported values of `AttributeValueDataType` are `STRING`, `NUMBER` and `BOOLEAN`.<br><br>
 
 #### `query(selector: string, parent?: string)` decorator
-Decorator that helps to query and return DOM element(s) on accessing the applied property. <br><br>
+Decorator that helps to query and return the first matched DOM element on accessing the applied property. <br><br>
 
 #### `queryAll(selector: string, parent?: string)` decorator
-Decorator that helps to query and return DOM element(s) on accessing the applied property. <br><br>
+Decorator that helps to query and returns all matched DOM elements on accessing the applied property. <br><br>
 
 #### `handle(eventName: string, element: string = 'self', all = false)` decorator
 Decorator that helps to bind a DOM event with a function.
